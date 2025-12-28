@@ -1,0 +1,228 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        // 系统通知表
+        Schema::create('gpa_system_notifications', function (Blueprint $table) {
+            $table->id()->comment('系统通知ID');
+            $table->string('title', 200)->comment('通知标题');
+            $table->text('content')->comment('通知内容');
+            $table->string('target_platform', 50)->default('all')->comment('目标平台：all全部，或user,admin,miniapp的逗号分隔组合');
+            $table->string('type', 50)->nullable()->comment('通知类型');
+            $table->tinyInteger('status')->default(1)->comment('状态：1启用，0禁用');
+            $table->unsignedBigInteger('account_id')->comment('创建人账号ID');
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->foreign('account_id')
+                ->references('id')
+                ->on('gpa_account')
+                ->onDelete('cascade');
+
+            $table->index('status');
+            $table->index('type');
+            $table->index('account_id');
+            $table->index('created_at');
+            $table->index(['status', 'created_at']);
+            $table->comment('系统通知表');
+        });
+
+        // 站内信表
+        Schema::create('gpa_messages', function (Blueprint $table) {
+            $table->id()->comment('站内信ID');
+            $table->unsignedBigInteger('sender_id')->comment('发送者账号ID');
+            $table->unsignedBigInteger('receiver_id')->comment('接收者账号ID');
+            $table->string('title', 200)->comment('站内信标题');
+            $table->text('content')->comment('站内信内容');
+            $table->string('target_platform', 50)->default('all')->comment('目标平台：all全部，或user,admin,miniapp的逗号分隔组合');
+            $table->tinyInteger('status')->default(0)->comment('状态：0未读，1已读');
+            $table->unsignedBigInteger('account_id')->comment('创建人账号ID（发送者）');
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->foreign('sender_id')
+                ->references('id')
+                ->on('gpa_account')
+                ->onDelete('cascade');
+
+            $table->foreign('receiver_id')
+                ->references('id')
+                ->on('gpa_account')
+                ->onDelete('cascade');
+
+            $table->foreign('account_id')
+                ->references('id')
+                ->on('gpa_account')
+                ->onDelete('cascade');
+
+            $table->index('sender_id');
+            $table->index('receiver_id');
+            $table->index('status');
+            $table->index('created_at');
+            $table->index(['receiver_id', 'status']);
+            $table->index(['sender_id', 'created_at']);
+            $table->index(['receiver_id', 'created_at']);
+            $table->comment('站内信表');
+        });
+
+        // 公告管理表
+        Schema::create('gpa_announcements', function (Blueprint $table) {
+            $table->id()->comment('公告ID');
+            $table->string('title', 200)->comment('公告标题');
+            $table->text('content')->comment('公告内容');
+            $table->string('target_platform', 50)->default('all')->comment('目标平台：all全部，或user,admin,miniapp的逗号分隔组合');
+            $table->string('position', 100)->default('home')->comment('显示位置（如：home首页）');
+            $table->timestamp('start_time')->nullable()->comment('开始时间');
+            $table->timestamp('end_time')->nullable()->comment('结束时间');
+            $table->tinyInteger('status')->default(1)->comment('状态：1启用，0禁用');
+            $table->unsignedBigInteger('account_id')->comment('创建人账号ID');
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->foreign('account_id')
+                ->references('id')
+                ->on('gpa_account')
+                ->onDelete('cascade');
+
+            $table->index('status');
+            $table->index('position');
+            $table->index('account_id');
+            $table->index('start_time');
+            $table->index('end_time');
+            $table->index('created_at');
+            $table->index(['status', 'position']);
+            $table->index(['status', 'start_time', 'end_time']);
+            $table->comment('公告管理表');
+        });
+
+        // 系统通知查看记录表
+        Schema::create('gpa_system_notification_reads', function (Blueprint $table) {
+            $table->id()->comment('查看记录ID');
+            $table->unsignedBigInteger('notification_id')->comment('系统通知ID');
+            $table->unsignedBigInteger('account_id')->comment('查看人账号ID');
+            $table->timestamp('read_at')->useCurrent()->comment('查看时间');
+
+            $table->foreign('notification_id')
+                ->references('id')
+                ->on('gpa_system_notifications')
+                ->onDelete('cascade');
+
+            $table->foreign('account_id')
+                ->references('id')
+                ->on('gpa_account')
+                ->onDelete('cascade');
+
+            $table->unique(['notification_id', 'account_id'], 'notification_account_unique');
+            $table->index('notification_id');
+            $table->index('account_id');
+            $table->index('read_at');
+            $table->index(['account_id', 'read_at']);
+            $table->comment('系统通知查看记录表');
+        });
+
+        // 站内信查看记录表
+        Schema::create('gpa_message_reads', function (Blueprint $table) {
+            $table->id()->comment('查看记录ID');
+            $table->unsignedBigInteger('message_id')->comment('站内信ID');
+            $table->unsignedBigInteger('account_id')->comment('查看人账号ID');
+            $table->timestamp('read_at')->useCurrent()->comment('查看时间');
+
+            $table->foreign('message_id')
+                ->references('id')
+                ->on('gpa_messages')
+                ->onDelete('cascade');
+
+            $table->foreign('account_id')
+                ->references('id')
+                ->on('gpa_account')
+                ->onDelete('cascade');
+
+            $table->unique(['message_id', 'account_id'], 'message_account_unique');
+            $table->index('message_id');
+            $table->index('account_id');
+            $table->index('read_at');
+            $table->index(['account_id', 'read_at']);
+            $table->comment('站内信查看记录表');
+        });
+
+        // 公告查看记录表
+        Schema::create('gpa_announcement_reads', function (Blueprint $table) {
+            $table->id()->comment('查看记录ID');
+            $table->unsignedBigInteger('announcement_id')->comment('公告ID');
+            $table->unsignedBigInteger('account_id')->comment('查看人账号ID');
+            $table->timestamp('read_at')->useCurrent()->comment('查看时间');
+
+            $table->foreign('announcement_id')
+                ->references('id')
+                ->on('gpa_announcements')
+                ->onDelete('cascade');
+
+            $table->foreign('account_id')
+                ->references('id')
+                ->on('gpa_account')
+                ->onDelete('cascade');
+
+            $table->unique(['announcement_id', 'account_id'], 'announcement_account_unique');
+            $table->index('announcement_id');
+            $table->index('account_id');
+            $table->index('read_at');
+            $table->index(['account_id', 'read_at']);
+            $table->comment('公告查看记录表');
+        });
+
+        // 站内信回复表
+        Schema::create('gpa_message_replies', function (Blueprint $table) {
+            $table->id()->comment('回复ID');
+            $table->unsignedBigInteger('message_id')->comment('站内信ID');
+            $table->unsignedBigInteger('sender_id')->comment('回复者账号ID');
+            $table->text('content')->comment('回复内容');
+            $table->unsignedBigInteger('account_id')->comment('创建人账号ID（回复者）');
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->foreign('message_id')
+                ->references('id')
+                ->on('gpa_messages')
+                ->onDelete('cascade');
+
+            $table->foreign('sender_id')
+                ->references('id')
+                ->on('gpa_account')
+                ->onDelete('cascade');
+
+            $table->foreign('account_id')
+                ->references('id')
+                ->on('gpa_account')
+                ->onDelete('cascade');
+
+            $table->index('message_id');
+            $table->index('sender_id');
+            $table->index('created_at');
+            $table->index(['message_id', 'created_at']);
+            $table->comment('站内信回复表');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('gpa_message_replies');
+        Schema::dropIfExists('gpa_announcement_reads');
+        Schema::dropIfExists('gpa_message_reads');
+        Schema::dropIfExists('gpa_system_notification_reads');
+        Schema::dropIfExists('gpa_announcements');
+        Schema::dropIfExists('gpa_messages');
+        Schema::dropIfExists('gpa_system_notifications');
+    }
+};
+

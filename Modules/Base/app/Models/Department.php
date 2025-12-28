@@ -11,6 +11,7 @@ use Modules\Base\Enums\ResourceTypeEnum;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Siushin\LaravelTool\Traits\ModelTool;
+use Siushin\LaravelTool\Utils\Tree;
 use Siushin\Util\Traits\ParamTool;
 
 /**
@@ -55,7 +56,6 @@ class Department extends Model
      */
     public static function getAllData(array $params = [], array $fields = []): array
     {
-        self::checkEmptyParam($params, ['company_id']);
         $params['status'] = self::STATUS_NORMAL;
         return self::fastGetAllData(self::class, $params, [
             'company_id'      => '=',
@@ -66,7 +66,7 @@ class Department extends Model
     }
 
     /**
-     * 获取部门列表（分页）
+     * 获取部门列表（树形结构）
      * @param array $params
      * @return array
      * @throws Exception
@@ -74,14 +74,21 @@ class Department extends Model
      */
     public static function getPageData(array $params = []): array
     {
-        return self::fastGetPageData(self::query(), $params, [
+        $where = self::buildWhereData($params, [
             'company_id'      => '=',
             'department_code' => 'like',
             'department_name' => 'like',
             'status'          => '=',
-            'date_range'      => 'created_at',
-            'time_range'      => 'created_at',
         ]);
+
+        $departments = self::query()
+            ->where($where)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('department_id', 'asc')
+            ->get()
+            ->toArray();
+
+        return (new Tree('department_id', 'parent_id'))->getTree($departments);
     }
 
     /**
@@ -94,27 +101,25 @@ class Department extends Model
     public static function addDepartment(array $params): array
     {
         self::trimValueArray($params, [], [null]);
-        self::checkEmptyParam($params, ['department_name', 'company_id']);
+        self::checkEmptyParam($params, ['department_name']);
 
         $department_name = $params['department_name'];
-        $company_id = $params['company_id'];
+        $company_id = $params['company_id'] ?? null;
         $parent_id = $params['parent_id'] ?? 0;
         $department_code = $params['department_code'] ?? null;
 
-        // 检查公司是否存在
-        $company = \Modules\Base\Models\Company::query()->find($company_id);
-        !$company && throw_exception('公司不存在');
-
-        // 如果提供了父部门，检查父部门是否存在且属于同一公司
+        // 检查父部门
         if ($parent_id > 0) {
-            $parent = self::query()->find($parent_id);
-            !$parent && throw_exception('父部门不存在');
-            if ($parent->company_id != $company_id) {
-                throw_exception('父部门必须属于同一公司');
+            $parentDept = self::query()->find($parent_id);
+            !$parentDept && throw_exception('父部门不存在');
+            // 如果提供了 company_id，验证父部门的 company_id 是否一致
+            if ($company_id !== null && $parentDept->company_id != $company_id) {
+                throw_exception('父部门的公司ID与当前部门不一致');
             }
+            $company_id = $company_id ?? $parentDept->company_id;
         }
 
-        // 检查同一公司、同一父级下部门名称唯一性
+        // 检查唯一性约束：同一公司、同一父级下部门名称必须唯一
         $exist = self::query()
             ->where('company_id', $company_id)
             ->where('parent_id', $parent_id)
@@ -122,8 +127,8 @@ class Department extends Model
             ->exists();
         $exist && throw_exception('该层级下部门名称已存在');
 
-        // 如果提供了部门编码，检查编码在公司内唯一性
-        if ($department_code) {
+        // 如果提供了 department_code，检查唯一性
+        if (!empty($department_code) && $company_id !== null) {
             $exist = self::query()
                 ->where('company_id', $company_id)
                 ->where('department_code', $department_code)
@@ -139,17 +144,9 @@ class Department extends Model
         $create_data = self::getArrayByKeys($params, $allowed_fields);
 
         // 设置默认值
-        $create_data['parent_id'] = $create_data['parent_id'] ?? 0;
-        $create_data['status'] = $create_data['status'] ?? 1;
+        $create_data['status'] = $create_data['status'] ?? self::STATUS_NORMAL;
         $create_data['sort_order'] = $create_data['sort_order'] ?? 0;
-
-        // 计算 full_parent_id
-        if ($parent_id > 0) {
-            $parent = self::query()->find($parent_id);
-            $create_data['full_parent_id'] = ($parent->full_parent_id ?? '') . $parent_id . ',';
-        } else {
-            $create_data['full_parent_id'] = '';
-        }
+        $create_data['parent_id'] = $create_data['parent_id'] ?? 0;
 
         $info = self::query()->create($create_data);
         !$info && throw_exception('新增部门失败');
@@ -187,33 +184,31 @@ class Department extends Model
 
         $department_id = $params['department_id'];
         $department_name = $params['department_name'];
-        $department_code = $params['department_code'] ?? null;
+        $parent_id = $params['parent_id'] ?? 0;
 
         $info = self::query()->find($department_id);
         !$info && throw_exception('找不到该数据，请刷新后重试');
         $old_data = $info->toArray();
 
         $company_id = $info->company_id;
-        $parent_id = $params['parent_id'] ?? $info->parent_id;
 
-        // 如果父部门发生变化，需要验证
-        if (isset($params['parent_id']) && $params['parent_id'] != $info->parent_id) {
-            $new_parent_id = $params['parent_id'] ?? 0;
-            if ($new_parent_id > 0) {
-                $parent = self::query()->find($new_parent_id);
-                !$parent && throw_exception('父部门不存在');
-                if ($parent->company_id != $company_id) {
-                    throw_exception('父部门必须属于同一公司');
-                }
-                // 检查是否形成循环引用
-                if (str_contains($info->full_parent_id ?? '', ",$new_parent_id,")) {
-                    throw_exception('不能将部门移动到自己的子级下，会导致循环引用');
-                }
+        // 检查父部门
+        if ($parent_id > 0) {
+            $parentDept = self::query()->find($parent_id);
+            !$parentDept && throw_exception('父部门不存在');
+            // 验证父部门的 company_id 是否一致
+            if ($parentDept->company_id != $company_id) {
+                throw_exception('父部门的公司ID与当前部门不一致');
+            }
+            // 检查是否形成循环引用（父部门不能是自己的子部门）
+            $childIds = self::getAllChildIds($department_id);
+            if (in_array($parent_id, $childIds)) {
+                throw_exception('不能将子部门设置为父部门，会导致循环引用');
             }
         }
 
-        // 检查同一公司、同一父级下部门名称唯一性（排除当前记录）
-        $check_parent_id = isset($params['parent_id']) ? $params['parent_id'] : $info->parent_id;
+        // 检查唯一性约束：同一公司、同一父级下部门名称必须唯一，排除当前记录
+        $check_parent_id = $parent_id > 0 ? $parent_id : ($info->parent_id ?? 0);
         $exist = self::query()
             ->where('company_id', $company_id)
             ->where('parent_id', $check_parent_id)
@@ -222,11 +217,11 @@ class Department extends Model
             ->exists();
         $exist && throw_exception('该层级下部门名称已存在，更新失败');
 
-        // 如果提供了部门编码，检查编码在公司内唯一性（排除当前记录）
-        if ($department_code) {
+        // 如果提供了 department_code，检查唯一性，排除当前记录
+        if (isset($params['department_code']) && !empty($params['department_code'])) {
             $exist = self::query()
                 ->where('company_id', $company_id)
-                ->where('department_code', $department_code)
+                ->where('department_code', $params['department_code'])
                 ->where('department_id', '<>', $department_id)
                 ->exists();
             $exist && throw_exception('该公司下部门编码已存在，更新失败');
@@ -243,17 +238,6 @@ class Department extends Model
         foreach ($allowed_fields as $field) {
             if (isset($params[$field])) {
                 $update_data[$field] = $params[$field];
-            }
-        }
-
-        // 如果父部门变化，更新 full_parent_id
-        if (isset($params['parent_id']) && $params['parent_id'] != $info->parent_id) {
-            $new_parent_id = $params['parent_id'] ?? 0;
-            if ($new_parent_id > 0) {
-                $parent = self::query()->find($new_parent_id);
-                $update_data['full_parent_id'] = ($parent->full_parent_id ?? '') . $new_parent_id . ',';
-            } else {
-                $update_data['full_parent_id'] = '';
             }
         }
 
@@ -299,6 +283,10 @@ class Department extends Model
         $hasChildren = self::query()->where('parent_id', $department_id)->exists();
         $hasChildren && throw_exception('该部门下存在子部门，无法删除');
 
+        // 检查是否有职位关联
+        $hasPositions = \Modules\Base\Models\Position::query()->where('department_id', $department_id)->exists();
+        $hasPositions && throw_exception('该部门下存在职位，无法删除');
+
         $old_data = $info->toArray();
         $department_name = $old_data['department_name'];
         $bool = $info->delete();
@@ -320,5 +308,22 @@ class Department extends Model
         );
 
         return [];
+    }
+
+    /**
+     * 获取所有子部门ID（递归）
+     * @param int $department_id
+     * @return array
+     * @author siushin<siushin@163.com>
+     */
+    private static function getAllChildIds(int $department_id): array
+    {
+        $childIds = [];
+        $children = self::query()->where('parent_id', $department_id)->pluck('department_id')->toArray();
+        foreach ($children as $childId) {
+            $childIds[] = $childId;
+            $childIds = array_merge($childIds, self::getAllChildIds($childId));
+        }
+        return $childIds;
     }
 }

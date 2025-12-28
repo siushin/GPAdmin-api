@@ -56,7 +56,6 @@ class Company extends Model
     public static function getAllData(array $params = [], array $fields = []): array
     {
         $params['status'] = self::STATUS_NORMAL;
-        // TODO 组织架构ID筛选
         return self::fastGetAllData(self::class, $params, [
             'company_code' => '=',
             'company_name' => 'like',
@@ -97,15 +96,15 @@ class Company extends Model
         $company_name = $params['company_name'];
         $company_code = $params['company_code'] ?? null;
 
-        // 检查公司名称唯一性
-        $exist = self::query()->where('company_name', $company_name)->exists();
-        $exist && throw_exception('公司名称已存在');
-
-        // 如果提供了公司编码，检查编码唯一性
-        if ($company_code) {
+        // 如果提供了 company_code，检查唯一性
+        if (!empty($company_code)) {
             $exist = self::query()->where('company_code', $company_code)->exists();
             $exist && throw_exception('公司编码已存在');
         }
+
+        // 检查公司名称唯一性
+        $exist = self::query()->where('company_name', $company_name)->exists();
+        $exist && throw_exception('公司名称已存在');
 
         // 过滤允许的字段
         $allowed_fields = [
@@ -115,7 +114,7 @@ class Company extends Model
         $create_data = self::getArrayByKeys($params, $allowed_fields);
 
         // 设置默认值
-        $create_data['status'] = $create_data['status'] ?? 1;
+        $create_data['status'] = $create_data['status'] ?? self::STATUS_NORMAL;
 
         $info = self::query()->create($create_data);
         !$info && throw_exception('新增公司失败');
@@ -153,23 +152,22 @@ class Company extends Model
 
         $company_id = $params['company_id'];
         $company_name = $params['company_name'];
-        $company_code = $params['company_code'] ?? null;
 
         $info = self::query()->find($company_id);
         !$info && throw_exception('找不到该数据，请刷新后重试');
         $old_data = $info->toArray();
 
-        // 检查公司名称唯一性（排除当前记录）
+        // 检查公司名称唯一性，排除当前记录
         $exist = self::query()
             ->where('company_name', $company_name)
             ->where('company_id', '<>', $company_id)
             ->exists();
         $exist && throw_exception('公司名称已存在，更新失败');
 
-        // 如果提供了公司编码，检查编码唯一性（排除当前记录）
-        if ($company_code) {
+        // 如果提供了 company_code，检查唯一性，排除当前记录
+        if (isset($params['company_code']) && !empty($params['company_code'])) {
             $exist = self::query()
-                ->where('company_code', $company_code)
+                ->where('company_code', $params['company_code'])
                 ->where('company_id', '<>', $company_id)
                 ->exists();
             $exist && throw_exception('公司编码已存在，更新失败');
@@ -226,6 +224,11 @@ class Company extends Model
 
         $info = self::query()->find($company_id);
         !$info && throw_exception('数据不存在');
+
+        // 检查是否有部门关联（需要先检查是否存在 Department 模型）
+        // 使用完全限定名避免循环依赖
+        $hasDepartments = \Modules\Base\Models\Department::query()->where('company_id', $company_id)->exists();
+        $hasDepartments && throw_exception('该公司下存在部门，无法删除');
 
         $old_data = $info->toArray();
         $company_name = $old_data['company_name'];

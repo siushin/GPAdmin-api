@@ -41,22 +41,25 @@ class Post extends Model
         'deleted_at',
     ];
 
+    const int STATUS_DISABLE = 0;   // 禁用
+    const int STATUS_NORMAL  = 1;   // 正常
+
     /**
      * 获取岗位列表（全部）
      * @param array $params
-     * @param array $fields
      * @return array
      * @throws Exception
      * @author siushin<siushin@163.com>
      */
     public static function getAllData(array $params = [], array $fields = []): array
     {
+        $params['status'] = self::STATUS_NORMAL;
         return self::fastGetAllData(self::class, $params, [
-            'position_id'   => '=',
-            'department_id'  => '=',
-            'post_code'      => '=',
-            'post_name'      => 'like',
-            'status'         => '=',
+            'position_id'  => '=',
+            'department_id' => '=',
+            'post_code'    => '=',
+            'post_name'    => 'like',
+            'status'       => '=',
         ], $fields);
     }
 
@@ -70,13 +73,13 @@ class Post extends Model
     public static function getPageData(array $params = []): array
     {
         return self::fastGetPageData(self::query(), $params, [
-            'position_id'   => '=',
+            'position_id'  => '=',
             'department_id' => '=',
-            'post_code'     => 'like',
-            'post_name'     => 'like',
-            'status'        => '=',
-            'date_range'    => 'created_at',
-            'time_range'    => 'created_at',
+            'post_code'    => 'like',
+            'post_name'    => 'like',
+            'status'       => '=',
+            'date_range'   => 'created_at',
+            'time_range'   => 'created_at',
         ]);
     }
 
@@ -90,30 +93,36 @@ class Post extends Model
     public static function addPost(array $params): array
     {
         self::trimValueArray($params, [], [null]);
-        self::checkEmptyParam($params, ['post_name', 'position_id', 'department_id']);
+        self::checkEmptyParam($params, ['post_name']);
 
         $post_name = $params['post_name'];
-        $position_id = $params['position_id'];
-        $department_id = $params['department_id'];
+        $position_id = $params['position_id'] ?? null;
+        $department_id = $params['department_id'] ?? null;
         $post_code = $params['post_code'] ?? null;
 
-        // 检查职位是否存在
-        $position = Position::query()->find($position_id);
-        !$position && throw_exception('职位不存在');
+        // 如果提供了 position_id，检查职位是否存在
+        if ($position_id !== null) {
+            $position = \Modules\Base\Models\Position::query()->find($position_id);
+            !$position && throw_exception('职位不存在');
+        }
 
-        // 检查部门是否存在
-        $department = Department::query()->find($department_id);
-        !$department && throw_exception('部门不存在');
+        // 如果提供了 department_id，检查部门是否存在
+        if ($department_id !== null) {
+            $department = \Modules\Base\Models\Department::query()->find($department_id);
+            !$department && throw_exception('部门不存在');
+        }
 
-        // 检查同一职位下岗位名称唯一性
-        $exist = self::query()
-            ->where('position_id', $position_id)
-            ->where('post_name', $post_name)
-            ->exists();
-        $exist && throw_exception('该职位下岗位名称已存在');
+        // 检查唯一性约束：同一职位下岗位名称必须唯一
+        if ($position_id !== null) {
+            $exist = self::query()
+                ->where('position_id', $position_id)
+                ->where('post_name', $post_name)
+                ->exists();
+            $exist && throw_exception('该职位下岗位名称已存在');
+        }
 
-        // 如果提供了岗位编码，检查编码全局唯一性
-        if ($post_code) {
+        // 如果提供了 post_code，检查全局唯一性
+        if (!empty($post_code)) {
             $exist = self::query()->where('post_code', $post_code)->exists();
             $exist && throw_exception('岗位编码已存在');
         }
@@ -126,7 +135,7 @@ class Post extends Model
         $create_data = self::getArrayByKeys($params, $allowed_fields);
 
         // 设置默认值
-        $create_data['status'] = $create_data['status'] ?? 1;
+        $create_data['status'] = $create_data['status'] ?? self::STATUS_NORMAL;
         $create_data['sort_order'] = $create_data['sort_order'] ?? 0;
 
         $info = self::query()->create($create_data);
@@ -165,44 +174,42 @@ class Post extends Model
 
         $post_id = $params['post_id'];
         $post_name = $params['post_name'];
-        $post_code = $params['post_code'] ?? null;
+        $position_id = $params['position_id'] ?? null;
+        $department_id = $params['department_id'] ?? null;
 
         $info = self::query()->find($post_id);
         !$info && throw_exception('找不到该数据，请刷新后重试');
         $old_data = $info->toArray();
 
-        $position_id = $info->position_id;
-        $department_id = $info->department_id;
+        // 确定用于检查唯一性的 position_id
+        $check_position_id = $position_id ?? $info->position_id;
 
-        // 如果职位发生变化，需要验证
-        if (isset($params['position_id']) && $params['position_id'] != $position_id) {
-            $new_position_id = $params['position_id'];
-            $position = Position::query()->find($new_position_id);
+        // 如果提供了 position_id，检查职位是否存在
+        if ($position_id !== null) {
+            $position = \Modules\Base\Models\Position::query()->find($position_id);
             !$position && throw_exception('职位不存在');
-            $position_id = $new_position_id;
         }
 
-        // 如果部门发生变化，需要验证
-        if (isset($params['department_id']) && $params['department_id'] != $department_id) {
-            $new_department_id = $params['department_id'];
-            $department = Department::query()->find($new_department_id);
+        // 如果提供了 department_id，检查部门是否存在
+        if ($department_id !== null) {
+            $department = \Modules\Base\Models\Department::query()->find($department_id);
             !$department && throw_exception('部门不存在');
-            $department_id = $new_department_id;
         }
 
-        // 检查同一职位下岗位名称唯一性（排除当前记录）
-        $check_position_id = isset($params['position_id']) ? $params['position_id'] : $info->position_id;
-        $exist = self::query()
-            ->where('position_id', $check_position_id)
-            ->where('post_name', $post_name)
-            ->where('post_id', '<>', $post_id)
-            ->exists();
-        $exist && throw_exception('该职位下岗位名称已存在，更新失败');
-
-        // 如果提供了岗位编码，检查编码全局唯一性（排除当前记录）
-        if ($post_code) {
+        // 检查唯一性约束：同一职位下岗位名称必须唯一，排除当前记录
+        if ($check_position_id !== null) {
             $exist = self::query()
-                ->where('post_code', $post_code)
+                ->where('position_id', $check_position_id)
+                ->where('post_name', $post_name)
+                ->where('post_id', '<>', $post_id)
+                ->exists();
+            $exist && throw_exception('该职位下岗位名称已存在，更新失败');
+        }
+
+        // 如果提供了 post_code，检查全局唯一性，排除当前记录
+        if (isset($params['post_code']) && !empty($params['post_code'])) {
+            $exist = self::query()
+                ->where('post_code', $params['post_code'])
                 ->where('post_id', '<>', $post_id)
                 ->exists();
             $exist && throw_exception('岗位编码已存在，更新失败');
@@ -213,7 +220,7 @@ class Post extends Model
 
         // 支持更新其他字段
         $allowed_fields = [
-            'position_id', 'department_id', 'post_code',
+            'post_code', 'position_id', 'department_id',
             'post_description', 'post_requirements', 'status', 'sort_order'
         ];
         foreach ($allowed_fields as $field) {

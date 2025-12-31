@@ -49,12 +49,29 @@ class Message extends Model
      */
     public static function getPageData(array $params = []): array
     {
-        return self::fastGetPageData(self::query(), $params, [
+        $query = self::query();
+
+        // 处理目标平台多选查询（支持数组或逗号分隔的字符串）
+        if (!empty($params['target_platform'])) {
+            $platforms = is_array($params['target_platform'])
+                ? $params['target_platform']
+                : explode(',', $params['target_platform']);
+            $platforms = array_filter(array_map('trim', $platforms));
+            if (!empty($platforms)) {
+                $query->where(function ($q) use ($platforms) {
+                    foreach ($platforms as $platform) {
+                        $q->orWhere('target_platform', 'like', "%{$platform}%");
+                    }
+                });
+            }
+            unset($params['target_platform']);
+        }
+
+        return self::fastGetPageData($query, $params, [
             'title'           => 'like',
             'status'          => '=',
             'sender_id'       => '=',
             'receiver_id'     => '=',
-            'target_platform' => 'like',
             'date_range'      => 'created_at',
             'time_range'      => 'created_at',
         ]);

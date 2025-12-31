@@ -24,6 +24,8 @@ class NotificationRead extends Model
         'target_id',
         'account_id',
         'read_at',
+        'ip_address',
+        'ip_location',
     ];
 
     /**
@@ -66,6 +68,8 @@ class NotificationRead extends Model
 
         $data = self::fastGetPageData($query, $params, [
             'account_id' => '=',
+            'ip_address' => 'like',
+            'ip_location' => 'like',
             'date_range' => 'read_at',
             'time_range' => 'read_at',
         ]);

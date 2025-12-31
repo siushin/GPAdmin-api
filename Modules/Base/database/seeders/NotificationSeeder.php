@@ -173,11 +173,19 @@ class NotificationSeeder extends Seeder
                 'admin,miniapp',
             ]);
 
+            // 随机生成开始和结束时间
+            $startTime = fake()->dateTimeBetween('-30 days', '+30 days');
+            // 确保结束时间在开始时间之后，且不早于当前时间太多
+            $maxEndTime = max($startTime, now()->addDays(60));
+            $endTime = fake()->dateTimeBetween($startTime, $maxEndTime);
+
             $systemNotification = SystemNotification::query()->create([
                 'title'           => $generateNotificationTitle($type),
                 'content'         => $generateContent($type),
                 'target_platform' => $targetPlatform,
                 'type'            => $type,
+                'start_time'      => $startTime,
+                'end_time'        => $endTime,
                 'status'          => fake()->randomElement([0, 1]),
                 'account_id'      => $accountId,
             ]);
@@ -254,6 +262,15 @@ class NotificationSeeder extends Seeder
         $this->command->info('正在创建通知查看记录数据...');
         $readCount = 0;
 
+        // 生成IP归属地的辅助函数
+        $generateIpLocation = function () {
+            $provinces = ['北京市', '上海市', '广东省', '浙江省', '江苏省', '山东省', '河南省', '四川省', '湖北省', '湖南省', '福建省', '安徽省', '河北省', '陕西省', '辽宁省'];
+            $cities = ['北京', '上海', '深圳', '广州', '杭州', '南京', '济南', '郑州', '成都', '武汉', '长沙', '福州', '合肥', '石家庄', '西安', '沈阳'];
+            $province = fake()->randomElement($provinces);
+            $city = fake()->randomElement($cities);
+            return "{$province}{$city}";
+        };
+
         // 为系统通知创建查看记录
         foreach ($systemNotifications as $notification) {
             // 每个通知随机有 0-20 个查看记录
@@ -281,6 +298,8 @@ class NotificationSeeder extends Seeder
                     ],
                     [
                         'read_at' => $readAt,
+                        'ip_address' => fake()->ipv4(),
+                        'ip_location' => $generateIpLocation(),
                     ]
                 );
                 $readCount++;
@@ -309,6 +328,8 @@ class NotificationSeeder extends Seeder
                     ],
                     [
                         'read_at' => $readAt,
+                        'ip_address' => fake()->ipv4(),
+                        'ip_location' => $generateIpLocation(),
                     ]
                 );
                 $readCount++;
@@ -366,6 +387,8 @@ class NotificationSeeder extends Seeder
                     ],
                     [
                         'read_at' => $readAt,
+                        'ip_address' => fake()->ipv4(),
+                        'ip_location' => $generateIpLocation(),
                     ]
                 );
                 $readCount++;

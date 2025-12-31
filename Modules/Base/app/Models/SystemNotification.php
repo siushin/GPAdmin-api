@@ -28,6 +28,8 @@ class SystemNotification extends Model
         'content',
         'target_platform',
         'type',
+        'start_time',
+        'end_time',
         'status',
         'account_id',
     ];
@@ -48,11 +50,102 @@ class SystemNotification extends Model
      */
     public static function getPageData(array $params = []): array
     {
-        return self::fastGetPageData(self::query(), $params, [
+        $query = self::query();
+
+        // 处理目标平台多选查询（支持数组或逗号分隔的字符串）
+        if (!empty($params['target_platform'])) {
+            $platforms = is_array($params['target_platform'])
+                ? $params['target_platform']
+                : explode(',', $params['target_platform']);
+            $platforms = array_filter(array_map('trim', $platforms));
+            if (!empty($platforms)) {
+                $query->where(function ($q) use ($platforms) {
+                    foreach ($platforms as $platform) {
+                        $q->orWhere('target_platform', 'like', "%{$platform}%");
+                    }
+                });
+            }
+            unset($params['target_platform']);
+        }
+
+        // 处理通知类型多选查询（支持数组或逗号分隔的字符串）
+        if (!empty($params['type'])) {
+            $types = is_array($params['type'])
+                ? $params['type']
+                : explode(',', $params['type']);
+            $types = array_filter(array_map('trim', $types));
+            if (!empty($types)) {
+                $query->whereIn('type', $types);
+            }
+            unset($params['type']);
+        }
+
+        // 处理生效时间状态筛选（支持数组或逗号分隔的字符串）
+        if (!empty($params['effective_time'])) {
+            $statuses = is_array($params['effective_time'])
+                ? $params['effective_time']
+                : explode(',', $params['effective_time']);
+            $statuses = array_filter(array_map('trim', $statuses));
+            if (!empty($statuses)) {
+                $now = now();
+                $query->where(function ($q) use ($statuses, $now) {
+                    foreach ($statuses as $status) {
+                        switch ($status) {
+                            case 'not_started':
+                                // 未开始：当前时间 < 开始时间
+                                $q->orWhere(function ($subQuery) use ($now) {
+                                    $subQuery->whereNotNull('start_time')
+                                        ->where('start_time', '>', $now);
+                                });
+                                break;
+                            case 'in_progress':
+                                // 进行中：当前时间在开始和结束时间之间
+                                $q->orWhere(function ($subQuery) use ($now) {
+                                    $subQuery->where(function ($sq) use ($now) {
+                                        $sq->where(function ($s) use ($now) {
+                                            // 有开始和结束时间
+                                            $s->whereNotNull('start_time')
+                                                ->whereNotNull('end_time')
+                                                ->where('start_time', '<=', $now)
+                                                ->where('end_time', '>=', $now);
+                                        })->orWhere(function ($s) use ($now) {
+                                            // 只有开始时间，且已开始
+                                            $s->whereNotNull('start_time')
+                                                ->whereNull('end_time')
+                                                ->where('start_time', '<=', $now);
+                                        })->orWhere(function ($s) use ($now) {
+                                            // 只有结束时间，且未结束
+                                            $s->whereNull('start_time')
+                                                ->whereNotNull('end_time')
+                                                ->where('end_time', '>=', $now);
+                                        });
+                                    });
+                                });
+                                break;
+                            case 'ended':
+                                // 已结束：当前时间 > 结束时间
+                                $q->orWhere(function ($subQuery) use ($now) {
+                                    $subQuery->whereNotNull('end_time')
+                                        ->where('end_time', '<', $now);
+                                });
+                                break;
+                            case 'effective':
+                                // 已生效：没有开始和结束时间（使用创建时间）
+                                $q->orWhere(function ($subQuery) {
+                                    $subQuery->whereNull('start_time')
+                                        ->whereNull('end_time');
+                                });
+                                break;
+                        }
+                    }
+                });
+            }
+            unset($params['effective_time']);
+        }
+
+        return self::fastGetPageData($query, $params, [
             'title'           => 'like',
-            'type'            => '=',
             'status'          => '=',
-            'target_platform' => 'like',
             'date_range'      => 'created_at',
             'time_range'      => 'created_at',
         ]);
@@ -74,7 +167,7 @@ class SystemNotification extends Model
 
         // 过滤允许的字段
         $allowed_fields = [
-            'title', 'content', 'target_platform', 'type', 'status', 'account_id'
+            'title', 'content', 'target_platform', 'type', 'start_time', 'end_time', 'status', 'account_id'
         ];
         $create_data = self::getArrayByKeys($params, $allowed_fields);
 
@@ -129,7 +222,7 @@ class SystemNotification extends Model
 
         // 支持更新其他字段
         $allowed_fields = [
-            'content', 'target_platform', 'type', 'status'
+            'content', 'target_platform', 'type', 'start_time', 'end_time', 'status'
         ];
         foreach ($allowed_fields as $field) {
             if (isset($params[$field])) {

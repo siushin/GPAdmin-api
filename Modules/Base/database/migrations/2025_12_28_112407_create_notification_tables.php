@@ -25,6 +25,8 @@ return new class extends Migration {
             $table->text('content')->comment('通知内容');
             $table->string('target_platform', 50)->default('all')->comment($targetPlatformComment);
             $table->string('type', 50)->nullable()->comment($notificationTypeComment);
+            $table->timestamp('start_time')->nullable()->comment('开始时间');
+            $table->timestamp('end_time')->nullable()->comment('结束时间');
             $table->tinyInteger('status')->default(1)->comment('状态：1启用，0禁用');
             $table->unsignedBigInteger('account_id')->comment('创建人账号ID');
             $table->timestamps();
@@ -38,8 +40,11 @@ return new class extends Migration {
             $table->index('status');
             $table->index('type');
             $table->index('account_id');
+            $table->index('start_time');
+            $table->index('end_time');
             $table->index('created_at');
             $table->index(['status', 'created_at']);
+            $table->index(['status', 'start_time', 'end_time']);
             $table->comment('系统通知表');
         });
 
@@ -118,6 +123,8 @@ return new class extends Migration {
             $table->unsignedBigInteger('target_id')->comment('目标ID（根据read_type指向不同的表：系统通知ID、站内信ID、公告ID）');
             $table->unsignedBigInteger('account_id')->comment('查看人账号ID');
             $table->timestamp('read_at')->useCurrent()->comment('查看时间');
+            $table->ipAddress('ip_address')->nullable()->comment('IP地址');
+            $table->string('ip_location')->nullable()->comment('IP归属地');
 
             $table->foreign('account_id')
                 ->references('id')
@@ -129,6 +136,7 @@ return new class extends Migration {
             $table->index('target_id');
             $table->index('account_id');
             $table->index('read_at');
+            $table->index('ip_address');
             $table->index(['read_type', 'target_id']);
             $table->index(['account_id', 'read_at']);
             $table->index(['read_type', 'account_id', 'read_at']);

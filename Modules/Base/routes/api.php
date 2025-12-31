@@ -15,6 +15,7 @@ use Modules\Base\Http\Controllers\OrganizationController;
 use Modules\Base\Http\Controllers\PositionController;
 use Modules\Base\Http\Controllers\PostController;
 use Modules\Base\Http\Controllers\RoleController;
+use Modules\Base\Http\Controllers\UserController;
 
 // 公共路由
 Route::get('/dictionary/getTplFile', [DictionaryController::class, 'getTplFile']);  // 下载数据字典模板
@@ -43,6 +44,15 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
     Route::post('/admin/delete', [AdminController::class, 'delete']);
     Route::post('/admin/getDetail', [AdminController::class, 'getDetail']);
     Route::post('/admin/getLogs', [AdminController::class, 'getLogs']);
+
+    // 用户管理
+    Route::post('/user/index', [UserController::class, 'index']);
+    Route::post('/user/add', [UserController::class, 'add']);
+    Route::post('/user/update', [UserController::class, 'update']);
+    Route::post('/user/delete', [UserController::class, 'delete']);
+    Route::post('/user/getDetail', [UserController::class, 'getDetail']);
+    Route::post('/user/getLogs', [UserController::class, 'getLogs']);
+    Route::post('/user/audit', [UserController::class, 'audit']);
 
     // 文件管理
     Route::post('/file/upload', [FileController::class, 'upload']);     // 上传文件

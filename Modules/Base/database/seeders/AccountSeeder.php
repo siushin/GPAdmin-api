@@ -48,6 +48,13 @@ class AccountSeeder extends Seeder
         // 创建账号
         $accounts = Account::factory(100)->create();
 
+        // 为每个账号随机设置状态值（-1：待审核，0：禁用，1：正常）
+        foreach ($accounts as $account) {
+            $account->update([
+                'status' => fake()->randomElement([-1, 0, 1]),
+            ]);
+        }
+
         // 为每个账号创建关联数据
         foreach ($accounts as $account) {
             // 创建账号资料

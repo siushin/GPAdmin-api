@@ -123,7 +123,6 @@ class Admin extends Model
                 $email = $socialAccounts->firstWhere('social_type', SocialTypeEnum::Email->value)?->social_account;
 
                 return [
-                    'id'              => $account->id,
                     'account_id'      => $account->id,
                     'username'        => $account->username,
                     'nickname'        => $profile?->nickname,
@@ -245,12 +244,15 @@ class Admin extends Model
      */
     public static function updateAdmin(array $params): array
     {
-        self::checkEmptyParam($params, ['id']);
+        if (empty($params['account_id'])) {
+            throw_exception('缺少 account_id 参数');
+        }
+        $accountId = $params['account_id'];
 
         DB::beginTransaction();
         try {
-            $account = Account::query()->findOrFail($params['id']);
-            if ($account->account_type !== AccountTypeEnum::Admin->value) {
+            $account = Account::query()->findOrFail($accountId);
+            if ($account->account_type !== AccountTypeEnum::Admin) {
                 throw_exception('该账号不是管理员账号');
             }
 
@@ -313,10 +315,13 @@ class Admin extends Model
      */
     public static function deleteAdmin(array $params): array
     {
-        self::checkEmptyParam($params, ['id']);
+        if (empty($params['account_id'])) {
+            throw_exception('缺少 account_id 参数');
+        }
+        $accountId = $params['account_id'];
 
-        $account = Account::query()->findOrFail($params['id']);
-        if ($account->account_type !== AccountTypeEnum::Admin->value) {
+        $account = Account::query()->findOrFail($accountId);
+        if ($account->account_type !== AccountTypeEnum::Admin) {
             throw_exception('该账号不是管理员账号');
         }
 
@@ -351,10 +356,13 @@ class Admin extends Model
      */
     public static function getAdminDetail(array $params): array
     {
-        self::checkEmptyParam($params, ['id']);
+        if (empty($params['account_id'])) {
+            throw_exception('缺少 account_id 参数');
+        }
+        $accountId = $params['account_id'];
 
         $account = Account::query()
-            ->where('id', $params['id'])
+            ->where('id', $accountId)
             ->where('account_type', AccountTypeEnum::Admin->value)
             ->with(['adminInfo', 'profile', 'socialAccounts'])
             ->first();
@@ -423,7 +431,7 @@ class Admin extends Model
                 'updated_at'          => $profile->updated_at?->format('Y-m-d H:i:s'),
             ] : null,
             'admin'   => $adminInfo ? [
-                'id'              => $adminInfo->id,
+                'account_id'      => $adminInfo->account_id,
                 'is_super'        => $adminInfo->is_super,
                 'company_id'      => $adminInfo->company_id,
                 'company_name'    => $company?->company_name,

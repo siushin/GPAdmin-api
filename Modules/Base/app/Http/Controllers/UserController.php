@@ -6,23 +6,23 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Modules\Base\Attributes\OperationAction;
 use Modules\Base\Enums\OperationActionEnum;
-use Modules\Base\Models\Admin;
 use Modules\Base\Models\AuditLog;
 use Modules\Base\Models\GeneralLog;
 use Modules\Base\Models\LoginLog;
 use Modules\Base\Models\OperationLog;
+use Modules\Base\Models\User;
 use Siushin\Util\Traits\ParamTool;
 
 /**
- * 控制器：管理员管理
- * @module 管理员管理
+ * 控制器：用户管理
+ * @module 用户管理
  */
-class AdminController extends Controller
+class UserController extends Controller
 {
     use ParamTool;
 
     /**
-     * 获取管理员列表（分页）
+     * 获取用户列表（分页）
      * @return JsonResponse
      * @author siushin<siushin@163.com>
      */
@@ -30,11 +30,11 @@ class AdminController extends Controller
     public function index(): JsonResponse
     {
         $params = trimParam(request()->all());
-        return success(Admin::getPageData($params));
+        return success(User::getPageData($params));
     }
 
     /**
-     * 新增管理员
+     * 新增用户
      * @return JsonResponse
      * @throws Exception
      * @author siushin<siushin@163.com>
@@ -43,11 +43,11 @@ class AdminController extends Controller
     public function add(): JsonResponse
     {
         $params = trimParam(request()->all());
-        return success(Admin::addAdmin($params));
+        return success(User::addUser($params));
     }
 
     /**
-     * 更新管理员
+     * 更新用户
      * @return JsonResponse
      * @throws Exception
      * @author siushin<siushin@163.com>
@@ -56,11 +56,11 @@ class AdminController extends Controller
     public function update(): JsonResponse
     {
         $params = trimParam(request()->all());
-        return success(Admin::updateAdmin($params));
+        return success(User::updateUser($params));
     }
 
     /**
-     * 删除管理员
+     * 删除用户
      * @return JsonResponse
      * @throws Exception
      * @author siushin<siushin@163.com>
@@ -69,11 +69,11 @@ class AdminController extends Controller
     public function delete(): JsonResponse
     {
         $params = trimParam(request()->only(['account_id']));
-        return success(Admin::deleteAdmin($params));
+        return success(User::deleteUser($params));
     }
 
     /**
-     * 获取管理员详情
+     * 获取用户详情
      * @return JsonResponse
      * @throws Exception
      * @author siushin<siushin@163.com>
@@ -82,11 +82,11 @@ class AdminController extends Controller
     public function getDetail(): JsonResponse
     {
         $params = trimParam(request()->only(['account_id']));
-        return success(Admin::getAdminDetail($params));
+        return success(User::getUserDetail($params));
     }
 
     /**
-     * 获取管理员日志（支持多种日志类型）
+     * 获取用户日志（支持多种日志类型）
      * @return JsonResponse
      * @throws Exception
      * @author siushin<siushin@163.com>
@@ -112,6 +112,19 @@ class AdminController extends Controller
             'login' => success(LoginLog::getPageData($requestParams)),
             default => throw_exception('不支持的日志类型: ' . $logType),
         };
+    }
+
+    /**
+     * 审核用户
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::update)]
+    public function audit(): JsonResponse
+    {
+        $params = trimParam(request()->all());
+        return success(User::auditUser($params));
     }
 }
 

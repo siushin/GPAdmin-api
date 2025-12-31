@@ -5,10 +5,10 @@ parent_key,menu_name,menu_key,menu_path,menu_icon,menu_type,component,redirect,i
 user,用户列表,user.list,/user/list,UserOutlined,menu,./User/User,,0,1
 user,待审核用户列表,user.pending,/user/pending,UserOutlined,menu,./User/Pending,,0,1
 ,,,,,,,,,,
-,通知管理,notif,/notification,BellOutlined,menu,,/notification/system,0,1
-notif,系统通知,notif.system,/notification/system,NotificationOutlined,menu,./Notification/System,,0,1
-notif,站内信,notif.message,/notification/message,MessageOutlined,menu,./Notification/Message,,0,1
-notif,公告管理,notif.announcement,/notification/announcement,SoundOutlined,menu,./Notification/Announcement,,0,1
+,通知管理,notif,/notification,BellOutlined,menu,,/notification/systemNotification,0,1
+notif,系统通知,notif.systemNotification,/notification/systemNotification,NotificationOutlined,menu,./notification/SystemNotification,,0,1
+notif,站内信,notif.message,/notification/message,MessageOutlined,menu,./notification/Message,,0,1
+notif,公告管理,notif.announcement,/notification/announcement,SoundOutlined,menu,./notification/Announcement,,0,1
 ,,,,,,,,,,
 ,应用管理,app,/app,AppstoreOutlined,menu,,/app/market,0,1
 app,应用市场,app.market,/app/market,ShopOutlined,menu,./App/Market,,0,1

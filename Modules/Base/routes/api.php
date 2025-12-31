@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Base\Http\Controllers\AccountController;
 use Modules\Base\Http\Controllers\AdminController;
+use Modules\Base\Http\Controllers\AnnouncementController;
 use Modules\Base\Http\Controllers\AppController;
 use Modules\Base\Http\Controllers\CompanyController;
 use Modules\Base\Http\Controllers\DepartmentController;
@@ -11,10 +12,13 @@ use Modules\Base\Http\Controllers\DictionaryController;
 use Modules\Base\Http\Controllers\FileController;
 use Modules\Base\Http\Controllers\LogController;
 use Modules\Base\Http\Controllers\MenuController;
+use Modules\Base\Http\Controllers\MessageController;
+use Modules\Base\Http\Controllers\NotificationReadController;
 use Modules\Base\Http\Controllers\OrganizationController;
 use Modules\Base\Http\Controllers\PositionController;
 use Modules\Base\Http\Controllers\PostController;
 use Modules\Base\Http\Controllers\RoleController;
+use Modules\Base\Http\Controllers\SystemNotificationController;
 use Modules\Base\Http\Controllers\UserController;
 
 // 公共路由
@@ -109,6 +113,25 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
 
     // 应用管理
     Route::post('/app/myApps', [AppController::class, 'getMyApps']);  // 获取我的应用列表
+
+    // 通知管理
+    // 系统通知管理
+    Route::post('/systemNotification/index', [SystemNotificationController::class, 'index']);
+    Route::post('/systemNotification/add', [SystemNotificationController::class, 'add']);
+    Route::post('/systemNotification/update', [SystemNotificationController::class, 'update']);
+    Route::post('/systemNotification/delete', [SystemNotificationController::class, 'delete']);
+    // 站内信管理
+    Route::post('/message/index', [MessageController::class, 'index']);
+    Route::post('/message/add', [MessageController::class, 'add']);
+    Route::post('/message/update', [MessageController::class, 'update']);
+    Route::post('/message/delete', [MessageController::class, 'delete']);
+    // 公告管理
+    Route::post('/announcement/index', [AnnouncementController::class, 'index']);
+    Route::post('/announcement/add', [AnnouncementController::class, 'add']);
+    Route::post('/announcement/update', [AnnouncementController::class, 'update']);
+    Route::post('/announcement/delete', [AnnouncementController::class, 'delete']);
+    // 通知查看记录管理
+    Route::post('/notificationRead/index', [NotificationReadController::class, 'index']);
 
     // 系统管理
     // 数据字典分类管理

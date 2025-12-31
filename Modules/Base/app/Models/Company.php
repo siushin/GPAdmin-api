@@ -28,17 +28,16 @@ class Company extends Model
         'organization_id',
         'company_code',
         'company_name',
+        'company_credit_code',
         'legal_person',
         'contact_phone',
         'contact_email',
         'address',
-        'description',
+        'company_desc',
         'status',
     ];
 
     protected $hidden = [
-        'created_at',
-        'updated_at',
         'deleted_at',
     ];
 
@@ -47,7 +46,7 @@ class Company extends Model
 
     /**
      * 获取公司列表（全部）
-     * @param array $params 支持：company_code、company_name
+     * @param array $params 支持：company_code、company_name、company_credit_code
      * @param array $fields
      * @return array
      * @throws Exception
@@ -57,9 +56,10 @@ class Company extends Model
     {
         $params['status'] = self::STATUS_NORMAL;
         return self::fastGetAllData(self::class, $params, [
-            'company_code' => '=',
-            'company_name' => 'like',
-            'status'       => '=',
+            'company_name'        => 'like',
+            'company_code'        => 'like',
+            'company_credit_code' => 'like',
+            'status'              => '=',
         ], $fields);
     }
 
@@ -73,11 +73,10 @@ class Company extends Model
     public static function getPageData(array $params = []): array
     {
         return self::fastGetPageData(self::query(), $params, [
-            'company_code' => 'like',
-            'company_name' => 'like',
-            'status'       => '=',
-            'date_range'   => 'created_at',
-            'time_range'   => 'created_at',
+            'company_name'        => 'like',
+            'company_code'        => 'like',
+            'company_credit_code' => 'like',
+            'status'              => '=',
         ]);
     }
 
@@ -96,11 +95,24 @@ class Company extends Model
         $company_name = $params['company_name'];
         $company_code = $params['company_code'] ?? null;
 
+        // 检查统一社会信用代码必填
+        $company_credit_code = $params['company_credit_code'] ?? null;
+        if (empty($company_credit_code)) {
+            throw_exception('统一社会信用代码不能为空');
+        }
+        if (strlen($company_credit_code) !== 18) {
+            throw_exception('统一社会信用代码必须为18位');
+        }
+
         // 如果提供了 company_code，检查唯一性
         if (!empty($company_code)) {
             $exist = self::query()->where('company_code', $company_code)->exists();
             $exist && throw_exception('公司编码已存在');
         }
+
+        // 检查统一社会信用代码唯一性
+        $exist = self::query()->where('company_credit_code', $company_credit_code)->exists();
+        $exist && throw_exception('统一社会信用代码已存在');
 
         // 检查公司名称唯一性
         $exist = self::query()->where('company_name', $company_name)->exists();
@@ -108,8 +120,8 @@ class Company extends Model
 
         // 过滤允许的字段
         $allowed_fields = [
-            'organization_id', 'company_code', 'company_name', 'legal_person',
-            'contact_phone', 'contact_email', 'address', 'description', 'status'
+            'organization_id', 'company_code', 'company_name', 'company_credit_code', 'legal_person',
+            'contact_phone', 'contact_email', 'address', 'company_desc', 'status'
         ];
         $create_data = self::getArrayByKeys($params, $allowed_fields);
 
@@ -173,13 +185,25 @@ class Company extends Model
             $exist && throw_exception('公司编码已存在，更新失败');
         }
 
+        // 如果提供了 company_credit_code，检查唯一性和格式，排除当前记录
+        if (isset($params['company_credit_code']) && !empty($params['company_credit_code'])) {
+            if (strlen($params['company_credit_code']) !== 18) {
+                throw_exception('统一社会信用代码必须为18位');
+            }
+            $exist = self::query()
+                ->where('company_credit_code', $params['company_credit_code'])
+                ->where('company_id', '<>', $company_id)
+                ->exists();
+            $exist && throw_exception('统一社会信用代码已存在，更新失败');
+        }
+
         // 构建更新数据
         $update_data = ['company_name' => $company_name];
 
         // 支持更新其他字段
         $allowed_fields = [
-            'organization_id', 'company_code', 'legal_person',
-            'contact_phone', 'contact_email', 'address', 'description', 'status'
+            'organization_id', 'company_code', 'company_credit_code', 'legal_person',
+            'contact_phone', 'contact_email', 'address', 'company_desc', 'status'
         ];
         foreach ($allowed_fields as $field) {
             if (isset($params[$field])) {

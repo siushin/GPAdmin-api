@@ -90,40 +90,43 @@ class OrganizationSeeder extends Seeder
         // 公司数据（关联组织架构）
         $companyData = [
             [
-                'company_id'      => $companyShenzhenId,
-                'company_name'    => '深圳科技有限公司',
-                'company_code'    => 'SZ-TECH-001',
-                'organization_id' => $orgShenzhenId, // 关联深圳市
-                'legal_person'    => '张三',
-                'contact_phone'   => '0755-12345678',
-                'contact_email'   => 'contact@sztech.com',
-                'address'         => '深圳市南山区科技园',
-                'description'     => '专注于软件开发和技术服务的高科技公司',
-                'status'          => 1,
+                'company_id'          => $companyShenzhenId,
+                'company_name'        => '深圳科技有限公司',
+                'company_code'        => 'SZ-TECH-001',
+                'company_credit_code' => '914403001234567891',
+                'organization_id'     => $orgShenzhenId, // 关联深圳市
+                'legal_person'        => '张三',
+                'contact_phone'       => '0755-12345678',
+                'contact_email'       => 'contact@sztech.com',
+                'address'             => '深圳市南山区科技园',
+                'company_desc'        => '专注于软件开发和技术服务的高科技公司',
+                'status'              => 1,
             ],
             [
-                'company_id'      => $companyGuangzhouId,
-                'company_name'    => '广州贸易有限公司',
-                'company_code'    => 'GZ-TRADE-001',
-                'organization_id' => $orgGuangzhouId, // 关联广州市
-                'legal_person'    => '李四',
-                'contact_phone'   => '020-87654321',
-                'contact_email'   => 'contact@gztrade.com',
-                'address'         => '广州市天河区CBD',
-                'description'     => '专业从事国际贸易和物流服务',
-                'status'          => 1,
+                'company_id'          => $companyGuangzhouId,
+                'company_name'        => '广州贸易有限公司',
+                'company_code'        => 'GZ-TRADE-001',
+                'company_credit_code' => '914401002345678902',
+                'organization_id'     => $orgGuangzhouId, // 关联广州市
+                'legal_person'        => '李四',
+                'contact_phone'       => '020-87654321',
+                'contact_email'       => 'contact@gztrade.com',
+                'address'             => '广州市天河区CBD',
+                'company_desc'        => '专业从事国际贸易和物流服务',
+                'status'              => 1,
             ],
             [
-                'company_id'      => $companyBeijingId,
-                'company_name'    => '北京金融投资有限公司',
-                'company_code'    => 'BJ-FINANCE-001',
-                'organization_id' => $orgBeijingId, // 关联北京市
-                'legal_person'    => '王五',
-                'contact_phone'   => '010-11223344',
-                'contact_email'   => 'contact@bjfinance.com',
-                'address'         => '北京市朝阳区金融街',
-                'description'     => '专业的金融投资和资产管理公司',
-                'status'          => 1,
+                'company_id'          => $companyBeijingId,
+                'company_name'        => '北京金融投资有限公司',
+                'company_code'        => 'BJ-FINANCE-001',
+                'company_credit_code' => '911100003456789013',
+                'organization_id'     => $orgBeijingId, // 关联北京市
+                'legal_person'        => '王五',
+                'contact_phone'       => '010-11223344',
+                'contact_email'       => 'contact@bjfinance.com',
+                'address'             => '北京市朝阳区金融街',
+                'company_desc'        => '专业的金融投资和资产管理公司',
+                'status'              => 1,
             ],
         ];
         Company::upsert($companyData, ['company_code']);

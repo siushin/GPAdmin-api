@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Modules\Base\Enums\NotificationReadTypeEnum;
 
 return new class extends Migration {
     /**
@@ -103,79 +104,30 @@ return new class extends Migration {
             $table->comment('公告管理表');
         });
 
-        // 系统通知查看记录表
-        Schema::create('gpa_system_notification_reads', function (Blueprint $table) {
+        // 通知查看记录表（合并表：系统通知、站内信、公告）
+        $readTypeComment = buildEnumComment(NotificationReadTypeEnum::cases(), '通知查看类型');
+
+        Schema::create('gpa_notification_reads', function (Blueprint $table) use ($readTypeComment) {
             $table->id()->comment('查看记录ID');
-            $table->unsignedBigInteger('notification_id')->comment('系统通知ID');
+            $table->string('read_type', 50)->comment($readTypeComment);
+            $table->unsignedBigInteger('target_id')->comment('目标ID（根据read_type指向不同的表：系统通知ID、站内信ID、公告ID）');
             $table->unsignedBigInteger('account_id')->comment('查看人账号ID');
             $table->timestamp('read_at')->useCurrent()->comment('查看时间');
-
-            $table->foreign('notification_id')
-                ->references('id')
-                ->on('gpa_system_notifications')
-                ->onDelete('cascade');
 
             $table->foreign('account_id')
                 ->references('id')
                 ->on('gpa_account')
                 ->onDelete('cascade');
 
-            $table->unique(['notification_id', 'account_id'], 'notification_account_unique');
-            $table->index('notification_id');
+            $table->unique(['read_type', 'target_id', 'account_id'], 'read_type_target_account_unique');
+            $table->index('read_type');
+            $table->index('target_id');
             $table->index('account_id');
             $table->index('read_at');
+            $table->index(['read_type', 'target_id']);
             $table->index(['account_id', 'read_at']);
-            $table->comment('系统通知查看记录表');
-        });
-
-        // 站内信查看记录表
-        Schema::create('gpa_message_reads', function (Blueprint $table) {
-            $table->id()->comment('查看记录ID');
-            $table->unsignedBigInteger('message_id')->comment('站内信ID');
-            $table->unsignedBigInteger('account_id')->comment('查看人账号ID');
-            $table->timestamp('read_at')->useCurrent()->comment('查看时间');
-
-            $table->foreign('message_id')
-                ->references('id')
-                ->on('gpa_messages')
-                ->onDelete('cascade');
-
-            $table->foreign('account_id')
-                ->references('id')
-                ->on('gpa_account')
-                ->onDelete('cascade');
-
-            $table->unique(['message_id', 'account_id'], 'message_account_unique');
-            $table->index('message_id');
-            $table->index('account_id');
-            $table->index('read_at');
-            $table->index(['account_id', 'read_at']);
-            $table->comment('站内信查看记录表');
-        });
-
-        // 公告查看记录表
-        Schema::create('gpa_announcement_reads', function (Blueprint $table) {
-            $table->id()->comment('查看记录ID');
-            $table->unsignedBigInteger('announcement_id')->comment('公告ID');
-            $table->unsignedBigInteger('account_id')->comment('查看人账号ID');
-            $table->timestamp('read_at')->useCurrent()->comment('查看时间');
-
-            $table->foreign('announcement_id')
-                ->references('id')
-                ->on('gpa_announcements')
-                ->onDelete('cascade');
-
-            $table->foreign('account_id')
-                ->references('id')
-                ->on('gpa_account')
-                ->onDelete('cascade');
-
-            $table->unique(['announcement_id', 'account_id'], 'announcement_account_unique');
-            $table->index('announcement_id');
-            $table->index('account_id');
-            $table->index('read_at');
-            $table->index(['account_id', 'read_at']);
-            $table->comment('公告查看记录表');
+            $table->index(['read_type', 'account_id', 'read_at']);
+            $table->comment('通知查看记录表（系统通知、站内信、公告）');
         });
 
         // 站内信回复表
@@ -217,9 +169,7 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::dropIfExists('gpa_message_replies');
-        Schema::dropIfExists('gpa_announcement_reads');
-        Schema::dropIfExists('gpa_message_reads');
-        Schema::dropIfExists('gpa_system_notification_reads');
+        Schema::dropIfExists('gpa_notification_reads');
         Schema::dropIfExists('gpa_announcements');
         Schema::dropIfExists('gpa_messages');
         Schema::dropIfExists('gpa_system_notifications');

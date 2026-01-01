@@ -46,4 +46,4 @@ jobs:
           git push --force gitee "${{ github.ref }}"
 
           # 可选：推送所有标签（如需同步标签）
-          # git push --tags gitee
+          git push --tags gitee

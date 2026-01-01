@@ -1,0 +1,49 @@
+name: Sync to Gitee
+
+# 触发条件：push 到 main/master 分支，或推送标签时触发
+on:
+  push:
+    branches: [main, master]
+    tags: ["*"]
+  # 可选：手动触发
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 检出 GitHub 代码（包含所有历史和分支）
+      - name: Checkout GitHub repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 必须拉取完整历史，否则无法同步所有分支/标签
+
+      # 2. 配置 SSH 免密登录 Gitee
+      - name: Configure SSH for Gitee
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.GITEE_SSH_KEY }}
+
+      # 3. 添加 Gitee 主机指纹（避免首次连接验证）
+      - name: Add Gitee to known_hosts
+        run: |
+          ssh-keyscan -H gitee.com >> ~/.ssh/known_hosts
+
+      # 4. 同步代码到 Gitee
+      - name: Sync to Gitee
+        env:
+          # 替换为你的 Gitee 用户名/仓库名（与 GitHub 同名）
+          GITEE_REPO: git@gitee.com:siushin/laravel-api.git
+        run: |
+          # 配置 Git 身份（必填，否则推送失败）
+          git config --global user.name "siushin"
+          git config --global user.email "siushin@163.com"
+
+          # 添加 Gitee 远程仓库
+          git remote add gitee $GITEE_REPO
+
+          # 推送分支（强制推送，确保同步最新）
+          git push --force gitee "${{ github.ref }}"
+
+          # 可选：推送所有标签（如需同步标签）
+          # git push --tags gitee

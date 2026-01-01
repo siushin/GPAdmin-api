@@ -17,7 +17,9 @@ enum OperationActionEnum: string
     case requestService = '请求服务';
     case create         = '新增';
     case add            = '添加';
+    case batchAdd       = '批量添加';
     case update         = '更新';
+    case batchUpdate    = '批量更新';
     case edit           = '编辑';
     case delete         = '删除';
     case batchDelete    = '批量删除';

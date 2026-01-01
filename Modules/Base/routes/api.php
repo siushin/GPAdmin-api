@@ -57,6 +57,8 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
     Route::post('/user/getDetail', [UserController::class, 'getDetail']);
     Route::post('/user/getLogs', [UserController::class, 'getLogs']);
     Route::post('/user/audit', [UserController::class, 'audit']);
+    Route::post('/user/batchAudit', [UserController::class, 'batchAudit']);
+    Route::post('/user/batchDelete', [UserController::class, 'batchDelete']);
 
     // 文件管理
     Route::post('/file/upload', [FileController::class, 'upload']);     // 上传文件

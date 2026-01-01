@@ -9,7 +9,7 @@ use Modules\Base\Attributes\DescriptionAttribute;
  */
 enum TargetPlatformEnum: string
 {
-    #[DescriptionAttribute('全部平台')]
+    #[DescriptionAttribute('全平台')]
     case All = 'all';
     #[DescriptionAttribute('用户端')]
     case User = 'user';

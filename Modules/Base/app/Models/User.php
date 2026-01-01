@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Modules\Base\Enums\AccountTypeEnum;
+use Modules\Base\Enums\LogActionEnum;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Enums\ResourceTypeEnum;
 use Siushin\LaravelTool\Enums\SocialTypeEnum;
@@ -55,10 +56,16 @@ class User extends Model
                 $q->where('username', 'like', "%{$params['username']}%");
             })
             ->when(isset($params['status']), function ($q) use ($params) {
-                $q->where('status', $params['status']);
+                // 支持 status 数组查询（用于"全部"tab等场景）
+                if (is_array($params['status'])) {
+                    $q->whereIn('status', $params['status']);
+                } else {
+                    $q->where('status', $params['status']);
+                }
             }, function ($q) {
-                // 如果没有指定status，默认排除待审核状态（status=-1）
-                $q->where('status', '!=', -1);
+                // 如果没有指定status，默认只显示禁用（0）和正常（1）状态的用户
+                // 排除待审核（-1）和已拒绝（-2）状态
+                $q->whereIn('status', [0, 1]);
             })
             ->when(!empty($params['keyword']), function ($q) use ($params) {
                 $q->where(function ($query) use ($params) {
@@ -382,7 +389,7 @@ class User extends Model
             throw_exception('缺少 account_id 参数');
         }
         $accountId = $params['account_id'];
-        if (empty($params['status'])) {
+        if (!isset($params['status'])) {
             throw_exception('缺少 status 参数');
         }
 
@@ -399,8 +406,8 @@ class User extends Model
         $old_data = $account->only(['id', 'username', 'account_type', 'status']);
 
         // 更新账号状态
-        // status: 1=通过(正常), 0=拒绝(禁用)
-        $account->status = $params['status'] == 1 ? 1 : 0;
+        // status: 1=通过(正常), -2=拒绝(已拒绝)
+        $account->status = $params['status'] == 1 ? 1 : -2;
         $account->save();
 
         // 记录审计日志
@@ -418,5 +425,177 @@ class User extends Model
         );
 
         return [];
+    }
+
+    /**
+     * 批量审核用户
+     * @param array $params
+     * @return array
+     * @throws Exception|Throwable
+     * @author siushin<siushin@163.com>
+     */
+    public static function batchAuditUser(array $params): array
+    {
+        if (empty($params['account_ids']) || !is_array($params['account_ids'])) {
+            throw_exception('缺少 account_ids 参数或参数格式错误');
+        }
+        $accountIds = $params['account_ids'];
+        if (!isset($params['status'])) {
+            throw_exception('缺少 status 参数');
+        }
+        $status = $params['status'] == 1 ? 1 : -2;
+
+        DB::beginTransaction();
+        try {
+            $accounts = Account::query()
+                ->whereIn('id', $accountIds)
+                ->where('account_type', AccountTypeEnum::User->value)
+                ->where('status', -1) // 只审核待审核状态的用户
+                ->get();
+
+            if ($accounts->isEmpty()) {
+                throw_exception('所选用户中没有待审核状态的用户');
+            }
+
+            $successCount = 0;
+            $failCount = 0;
+            $successUsernames = [];
+            $failUsernames = [];
+
+            foreach ($accounts as $account) {
+                try {
+                    // 保存旧数据
+                    $old_data = $account->only(['id', 'username', 'account_type', 'status']);
+
+                    // 更新账号状态
+                    $account->status = $status;
+                    $account->save();
+
+                    // 记录审计日志
+                    $new_data = $account->fresh()->only(['id', 'username', 'account_type', 'status']);
+                    logAudit(
+                        request(),
+                        currentUserId(),
+                        '用户管理',
+                        OperationActionEnum::update->value,
+                        ResourceTypeEnum::user->value,
+                        $account->id,
+                        $old_data,
+                        $new_data,
+                        "批量审核用户: $account->username, " . ($status == 1 ? '通过' : '拒绝')
+                    );
+
+                    $successCount++;
+                    $successUsernames[] = $account->username;
+                } catch (Exception $e) {
+                    $failCount++;
+                    $failUsernames[] = $account->username . '(' . $e->getMessage() . ')';
+                }
+            }
+
+            DB::commit();
+
+            $message = "批量审核完成：成功 {$successCount} 个";
+            if ($failCount > 0) {
+                $message .= "，失败 $failCount 个";
+            }
+
+            return [
+                'success_count'     => $successCount,
+                'fail_count'        => $failCount,
+                'success_usernames' => $successUsernames,
+                'fail_usernames'    => $failUsernames,
+                'message'           => $message,
+            ];
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * 批量删除用户
+     * @param array $params
+     * @return array
+     * @throws Exception|Throwable
+     * @author siushin<siushin@163.com>
+     */
+    public static function batchDeleteUser(array $params): array
+    {
+        if (empty($params['account_ids']) || !is_array($params['account_ids'])) {
+            throw_exception('缺少 account_ids 参数或参数格式错误');
+        }
+        $accountIds = $params['account_ids'];
+
+        DB::beginTransaction();
+        try {
+            $accounts = Account::query()
+                ->whereIn('id', $accountIds)
+                ->where('account_type', AccountTypeEnum::User->value)
+                ->get();
+
+            if ($accounts->isEmpty()) {
+                throw_exception('所选用户中没有有效的用户账号');
+            }
+
+            $successCount = 0;
+            $failCount = 0;
+            $successUsernames = [];
+            $failUsernames = [];
+
+            foreach ($accounts as $account) {
+                try {
+                    // 保存旧数据
+                    $old_data = $account->only(['id', 'username', 'account_type', 'status']);
+
+                    // 删除账号（会级联删除用户信息）
+                    $account->delete();
+
+                    // 记录审计日志
+                    logAudit(
+                        request(),
+                        currentUserId(),
+                        '用户管理',
+                        OperationActionEnum::delete->value,
+                        ResourceTypeEnum::user->value,
+                        $account->id,
+                        $old_data,
+                        null,
+                        "批量删除用户: $account->username"
+                    );
+
+                    $successCount++;
+                    $successUsernames[] = $account->username;
+                } catch (Exception $e) {
+                    $failCount++;
+                    $failUsernames[] = $account->username . '(' . $e->getMessage() . ')';
+                }
+            }
+
+            // 记录常规日志
+            logGeneral(
+                LogActionEnum::batchDelete->name,
+                "批量删除用户(数量: $successCount, IDs: " . implode(',', $accountIds) . ")",
+                $accounts->toArray()
+            );
+
+            DB::commit();
+
+            $message = "批量删除完成：成功 {$successCount} 个";
+            if ($failCount > 0) {
+                $message .= "，失败 $failCount 个";
+            }
+
+            return [
+                'success_count'     => $successCount,
+                'fail_count'        => $failCount,
+                'success_usernames' => $successUsernames,
+                'fail_usernames'    => $failUsernames,
+                'message'           => $message,
+            ];
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 }

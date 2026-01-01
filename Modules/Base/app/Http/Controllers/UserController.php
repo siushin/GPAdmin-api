@@ -12,6 +12,7 @@ use Modules\Base\Models\LoginLog;
 use Modules\Base\Models\OperationLog;
 use Modules\Base\Models\User;
 use Siushin\Util\Traits\ParamTool;
+use Throwable;
 
 /**
  * 控制器：用户管理
@@ -36,7 +37,7 @@ class UserController extends Controller
     /**
      * 新增用户
      * @return JsonResponse
-     * @throws Exception
+     * @throws Exception|Throwable
      * @author siushin<siushin@163.com>
      */
     #[OperationAction(OperationActionEnum::add)]
@@ -49,7 +50,7 @@ class UserController extends Controller
     /**
      * 更新用户
      * @return JsonResponse
-     * @throws Exception
+     * @throws Exception|Throwable
      * @author siushin<siushin@163.com>
      */
     #[OperationAction(OperationActionEnum::update)]
@@ -125,6 +126,32 @@ class UserController extends Controller
     {
         $params = trimParam(request()->all());
         return success(User::auditUser($params));
+    }
+
+    /**
+     * 批量审核用户
+     * @return JsonResponse
+     * @throws Exception|Throwable
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::batchUpdate)]
+    public function batchAudit(): JsonResponse
+    {
+        $params = trimParam(request()->all());
+        return success(User::batchAuditUser($params));
+    }
+
+    /**
+     * 批量删除用户
+     * @return JsonResponse
+     * @throws Exception|Throwable
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::batchDelete)]
+    public function batchDelete(): JsonResponse
+    {
+        $params = trimParam(request()->all());
+        return success(User::batchDeleteUser($params));
     }
 }
 

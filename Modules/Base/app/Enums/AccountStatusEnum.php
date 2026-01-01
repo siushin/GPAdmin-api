@@ -9,6 +9,8 @@ use Modules\Base\Attributes\DescriptionAttribute;
  */
 enum AccountStatusEnum: int
 {
+    #[DescriptionAttribute('已拒绝')]
+    case REJECTED   = -2;
     #[DescriptionAttribute('待审核')]
     case WAIT_AUDIT = -1;
     #[DescriptionAttribute('禁用')]

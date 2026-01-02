@@ -110,3 +110,27 @@ function enumToArrayFromComment(string|UnitEnum $enumClass): array
     return $result;
 }
 
+/**
+ * 获取IP归属地
+ * @param string|null $ipAddress IP地址
+ * @return string|null IP归属地，如果获取失败则返回 null
+ * @author siushin<siushin@163.com>
+ */
+function getIpLocation(?string $ipAddress): ?string
+{
+    if (empty($ipAddress)) {
+        return null;
+    }
+
+    try {
+        if (class_exists('Ip2Region')) {
+            $ip2region = new \Ip2Region();
+            return $ip2region->simple($ipAddress);
+        }
+    } catch (Exception $e) {
+        // 忽略错误，返回null
+    }
+
+    return null;
+}
+

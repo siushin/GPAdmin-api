@@ -377,13 +377,7 @@ class SmsService
     {
         try {
             // 获取 IP 归属地
-            $ipLocation = '';
-            try {
-                $ip2region = new \Ip2Region();
-                $ipLocation = $ip2region->simple($ip);
-            } catch (Exception $e) {
-                // IP 归属地获取失败，忽略
-            }
+            $ipLocation = getIpLocation($ip);
 
             // 准备日志数据
             $logData = [

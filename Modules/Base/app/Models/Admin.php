@@ -53,11 +53,12 @@ class Admin extends Model
         $query = Account::query()
             ->where('account_type', AccountTypeEnum::Admin->value)
             ->with(['adminInfo', 'profile', 'socialAccounts'])
-            ->when(!empty($params['username']), function ($q) use ($params) {
-                $q->where('username', 'like', "%{$params['username']}%");
-            })
             ->when(isset($params['status']), function ($q) use ($params) {
-                $q->where('status', $params['status']);
+                if (is_array($params['status'])) {
+                    $q->whereIn('status', $params['status']);
+                } else {
+                    $q->where('status', $params['status']);
+                }
             })
             ->when(!empty($params['keyword']), function ($q) use ($params) {
                 $q->where(function ($query) use ($params) {
@@ -123,20 +124,21 @@ class Admin extends Model
                 $email = $socialAccounts->firstWhere('social_type', SocialTypeEnum::Email->value)?->social_account;
 
                 return [
-                    'account_id'      => $account->id,
-                    'username'        => $account->username,
-                    'nickname'        => $profile?->nickname,
-                    'phone'           => $phone,
-                    'email'           => $email,
-                    'account_type'    => $account->account_type->value,
-                    'status'          => $account->status,
-                    'is_super'        => $adminInfo?->is_super ?? 0,
-                    'company_id'      => $adminInfo?->company_id,
-                    'department_id'   => $adminInfo?->department_id,
-                    'last_login_ip'   => $account->last_login_ip,
-                    'last_login_time' => $account->last_login_time?->format('Y-m-d H:i:s'),
-                    'created_at'      => $account->created_at?->format('Y-m-d H:i:s'),
-                    'updated_at'      => $account->updated_at?->format('Y-m-d H:i:s'),
+                    'account_id'          => $account->id,
+                    'username'            => $account->username,
+                    'nickname'            => $profile?->nickname,
+                    'phone'               => $phone,
+                    'email'               => $email,
+                    'account_type'        => $account->account_type->value,
+                    'status'              => $account->status,
+                    'is_super'            => $adminInfo?->is_super ?? 0,
+                    'company_id'          => $adminInfo?->company_id,
+                    'department_id'       => $adminInfo?->department_id,
+                    'last_login_ip'       => $account->last_login_ip,
+                    'last_login_location' => getIpLocation($account->last_login_ip),
+                    'last_login_time'     => $account->last_login_time?->format('Y-m-d H:i:s'),
+                    'created_at'          => $account->created_at?->format('Y-m-d H:i:s'),
+                    'updated_at'          => $account->updated_at?->format('Y-m-d H:i:s'),
                 ];
             })
             ->toArray();
@@ -409,14 +411,15 @@ class Admin extends Model
 
         return [
             'account' => [
-                'id'              => $account->id,
-                'username'        => $account->username,
-                'account_type'    => $account->account_type->value,
-                'status'          => $account->status,
-                'last_login_ip'   => $account->last_login_ip,
-                'last_login_time' => $account->last_login_time?->format('Y-m-d H:i:s'),
-                'created_at'      => $account->created_at?->format('Y-m-d H:i:s'),
-                'updated_at'      => $account->updated_at?->format('Y-m-d H:i:s'),
+                'id'                  => $account->id,
+                'username'            => $account->username,
+                'account_type'        => $account->account_type->value,
+                'status'              => $account->status,
+                'last_login_ip'       => $account->last_login_ip,
+                'last_login_location' => getIpLocation($account->last_login_ip),
+                'last_login_time'     => $account->last_login_time?->format('Y-m-d H:i:s'),
+                'created_at'          => $account->created_at?->format('Y-m-d H:i:s'),
+                'updated_at'          => $account->updated_at?->format('Y-m-d H:i:s'),
             ],
             'profile' => $profile ? [
                 'id'                  => $profile->id,

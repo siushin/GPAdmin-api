@@ -6,7 +6,6 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Ip2Region;
 use Modules\Base\Models\AccountSocial;
 use Siushin\LaravelTool\Enums\RequestSourceEnum;
 use Siushin\LaravelTool\Enums\SocialTypeEnum;
@@ -51,7 +50,7 @@ class LogService
             $ipAddress = $request->ip();
 
             // 获取IP归属地
-            $ipLocation = $this->getIpLocation($ipAddress);
+            $ipLocation = getIpLocation($ipAddress);
 
             $data = [
                 'log_id'      => generateId(),
@@ -103,7 +102,7 @@ class LogService
             $userAgent = $request->userAgent() ?? '';
 
             // 获取IP归属地
-            $ipLocation = $this->getIpLocation($ipAddress);
+            $ipLocation = getIpLocation($ipAddress);
 
             $data = [
                 'id'             => generateId(),
@@ -159,7 +158,7 @@ class LogService
             $userAgent = $request->userAgent() ?? '';
 
             // 获取IP归属地
-            $ipLocation = $this->getIpLocation($ipAddress);
+            $ipLocation = getIpLocation($ipAddress);
 
             $data = [
                 'id'            => generateId(),
@@ -203,7 +202,7 @@ class LogService
             $browserInfo = $this->parseUserAgent($userAgent);
 
             // 获取IP归属地
-            $ipLocation = $this->getIpLocation($ipAddress);
+            $ipLocation = getIpLocation($ipAddress);
 
             // 如果没有提供消息，根据状态生成默认消息
             if (!$message) {
@@ -298,22 +297,4 @@ class LogService
         ];
     }
 
-    /**
-     * 获取IP归属地
-     * @param string $ipAddress
-     * @return string|null
-     */
-    private function getIpLocation(string $ipAddress): ?string
-    {
-        try {
-            if (class_exists('Ip2Region')) {
-                $ip2region = new Ip2Region();
-                return $ip2region->simple($ipAddress);
-            }
-        } catch (Exception $e) {
-            // 忽略错误，返回null
-        }
-
-        return null;
-    }
 }

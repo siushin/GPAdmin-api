@@ -4,9 +4,9 @@ namespace Modules\Base\Http\Controllers;
 
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Modules\Base\Attributes\OperationAction;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\NotificationRead;
+use Siushin\LaravelTool\Attributes\OperationAction;
 
 /**
  * 控制器：通知查看记录管理
@@ -15,7 +15,7 @@ use Modules\Base\Models\NotificationRead;
 class NotificationReadController extends Controller
 {
     /**
-     * 获取通知查看记录列表（分页）
+     * 获取通知查看记录列表
      * @return JsonResponse
      * @throws Exception
      * @author siushin<siushin@163.com>

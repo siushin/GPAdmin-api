@@ -5,11 +5,11 @@ namespace Modules\Base\Http\Controllers;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Modules\Base\Attributes\OperationAction;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\File;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\OperationAction;
 
 /**
  * 控制器：文件

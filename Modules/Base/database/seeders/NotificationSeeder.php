@@ -158,7 +158,7 @@ class NotificationSeeder extends Seeder
         };
 
         // 1. 创建系统通知数据（50条）
-        $this->command->info('正在创建系统通知数据...');
+        $this->command->info('  正在创建系统通知数据...');
         $systemNotifications = [];
         for ($i = 0; $i < 50; $i++) {
             $type = fake()->randomElement(['system', 'business', 'activity', 'other']);
@@ -191,10 +191,10 @@ class NotificationSeeder extends Seeder
             ]);
             $systemNotifications[] = $systemNotification;
         }
-        $this->command->info('系统通知数据创建完成：' . count($systemNotifications) . ' 条');
+        $this->command->info('  系统通知数据创建完成：' . count($systemNotifications) . ' 条');
 
         // 2. 创建站内信数据（50条）
-        $this->command->info('正在创建站内信数据...');
+        $this->command->info('  正在创建站内信数据...');
         $messages = [];
         for ($i = 0; $i < 50; $i++) {
             $senderId = $accountIds[array_rand($accountIds)];
@@ -222,10 +222,10 @@ class NotificationSeeder extends Seeder
             ]);
             $messages[] = $message;
         }
-        $this->command->info('站内信数据创建完成：' . count($messages) . ' 条');
+        $this->command->info('  站内信数据创建完成：' . count($messages) . ' 条');
 
         // 3. 创建公告数据（30条）
-        $this->command->info('正在创建公告数据...');
+        $this->command->info('  正在创建公告数据...');
         $announcements = [];
         for ($i = 0; $i < 30; $i++) {
             $accountId = $accountIds[array_rand($accountIds)];
@@ -256,10 +256,10 @@ class NotificationSeeder extends Seeder
             ]);
             $announcements[] = $announcement;
         }
-        $this->command->info('公告数据创建完成：' . count($announcements) . ' 条');
+        $this->command->info('  公告数据创建完成：' . count($announcements) . ' 条');
 
         // 4. 创建通知查看记录
-        $this->command->info('正在创建通知查看记录数据...');
+        $this->command->info('  正在创建通知查看记录数据...');
         $readCount = 0;
 
         // 生成IP归属地的辅助函数
@@ -281,24 +281,24 @@ class NotificationSeeder extends Seeder
                 // 随机生成查看时间（在通知创建时间之后）
                 $startTime = \Carbon\Carbon::parse($notification->created_at);
                 $endTime = \Carbon\Carbon::now();
-                
+
                 // 如果开始时间大于等于结束时间，添加1秒间隔
                 if ($startTime->gte($endTime)) {
                     $endTime = $startTime->copy()->addSecond();
                 }
-                
+
                 $readAt = fake()->dateTimeBetween($startTime, $endTime);
 
                 // 使用 updateOrCreate 避免重复
                 NotificationRead::query()->updateOrCreate(
                     [
-                        'read_type' => NotificationReadTypeEnum::SystemNotification->value,
-                        'target_id' => $notification->id,
+                        'read_type'  => NotificationReadTypeEnum::SystemNotification->value,
+                        'target_id'  => $notification->id,
                         'account_id' => $readAccountId,
                     ],
                     [
-                        'read_at' => $readAt,
-                        'ip_address' => fake()->ipv4(),
+                        'read_at'     => $readAt,
+                        'ip_address'  => fake()->ipv4(),
                         'ip_location' => $generateIpLocation(),
                     ]
                 );
@@ -312,23 +312,23 @@ class NotificationSeeder extends Seeder
             if ($message->status === 1) {
                 $startTime = \Carbon\Carbon::parse($message->created_at);
                 $endTime = \Carbon\Carbon::now();
-                
+
                 // 如果开始时间大于等于结束时间，添加1秒间隔
                 if ($startTime->gte($endTime)) {
                     $endTime = $startTime->copy()->addSecond();
                 }
-                
+
                 $readAt = fake()->dateTimeBetween($startTime, $endTime);
                 // 使用 updateOrCreate 避免重复
                 NotificationRead::query()->updateOrCreate(
                     [
-                        'read_type' => NotificationReadTypeEnum::Message->value,
-                        'target_id' => $message->id,
+                        'read_type'  => NotificationReadTypeEnum::Message->value,
+                        'target_id'  => $message->id,
                         'account_id' => $message->receiver_id,
                     ],
                     [
-                        'read_at' => $readAt,
-                        'ip_address' => fake()->ipv4(),
+                        'read_at'     => $readAt,
+                        'ip_address'  => fake()->ipv4(),
                         'ip_location' => $generateIpLocation(),
                     ]
                 );
@@ -347,7 +347,7 @@ class NotificationSeeder extends Seeder
                 $startTime = \Carbon\Carbon::parse($announcement->created_at);
                 $endTime = $announcement->end_time ? \Carbon\Carbon::parse($announcement->end_time) : null;
                 $now = \Carbon\Carbon::now();
-                
+
                 // 确定最大查看时间
                 if ($endTime === null) {
                     // 如果结束时间为空，使用当前时间
@@ -362,32 +362,32 @@ class NotificationSeeder extends Seeder
                     // 正常情况：使用结束时间
                     $maxReadTime = $endTime;
                 }
-                
+
                 // 确保开始时间不晚于最大查看时间
                 if ($startTime->gt($maxReadTime)) {
                     $maxReadTime = $now;
                 }
-                
+
                 // 确保开始时间不晚于最大查看时间（再次检查，以防万一）
                 $finalStartTime = $startTime->lt($maxReadTime) ? $startTime : $maxReadTime;
-                
+
                 // 如果开始时间和结束时间相同或开始时间大于结束时间，添加1秒的间隔
                 if ($finalStartTime->gte($maxReadTime)) {
                     $maxReadTime = $finalStartTime->copy()->addSecond();
                 }
-                
+
                 $readAt = fake()->dateTimeBetween($finalStartTime, $maxReadTime);
 
                 // 使用 updateOrCreate 避免重复
                 NotificationRead::query()->updateOrCreate(
                     [
-                        'read_type' => NotificationReadTypeEnum::Announcement->value,
-                        'target_id' => $announcement->id,
+                        'read_type'  => NotificationReadTypeEnum::Announcement->value,
+                        'target_id'  => $announcement->id,
                         'account_id' => $readAccountId,
                     ],
                     [
-                        'read_at' => $readAt,
-                        'ip_address' => fake()->ipv4(),
+                        'read_at'     => $readAt,
+                        'ip_address'  => fake()->ipv4(),
                         'ip_location' => $generateIpLocation(),
                     ]
                 );
@@ -395,8 +395,8 @@ class NotificationSeeder extends Seeder
             }
         }
 
-        $this->command->info('通知查看记录数据创建完成：' . $readCount . ' 条');
-        $this->command->info('通知数据填充完成！');
+        $this->command->info('  通知查看记录数据创建完成：' . $readCount . ' 条');
+        $this->command->info('  通知数据填充完成！');
     }
 }
 

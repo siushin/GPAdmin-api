@@ -1,6 +1,6 @@
 <?php
 
-use Modules\Base\Attributes\DescriptionAttribute;
+use Siushin\LaravelTool\Attributes\DescriptionAttribute;
 
 /**
  * 助手函数：通用辅助函数

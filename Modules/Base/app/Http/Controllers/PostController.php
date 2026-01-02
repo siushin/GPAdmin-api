@@ -5,11 +5,11 @@ namespace Modules\Base\Http\Controllers;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Modules\Base\Attributes\OperationAction;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Post;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\OperationAction;
 
 /**
  * 控制器：岗位管理
@@ -45,7 +45,7 @@ class PostController extends Controller
     }
 
     /**
-     * 新增岗位
+     * 添加岗位
      * @return JsonResponse
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @author siushin<siushin@163.com>
@@ -58,7 +58,7 @@ class PostController extends Controller
     }
 
     /**
-     * 编辑岗位
+     * 更新岗位
      * @return JsonResponse
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @author siushin<siushin@163.com>

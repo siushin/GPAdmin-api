@@ -5,11 +5,11 @@ namespace Modules\Base\Http\Controllers;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Modules\Base\Attributes\OperationAction;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Department;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\OperationAction;
 
 /**
  * 控制器：部门管理
@@ -45,7 +45,7 @@ class DepartmentController extends Controller
     }
 
     /**
-     * 新增部门
+     * 添加部门
      * @return JsonResponse
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @author siushin<siushin@163.com>
@@ -58,7 +58,7 @@ class DepartmentController extends Controller
     }
 
     /**
-     * 编辑部门
+     * 更新部门
      * @return JsonResponse
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @author siushin<siushin@163.com>

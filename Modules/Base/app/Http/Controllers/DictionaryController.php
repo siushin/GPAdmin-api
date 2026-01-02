@@ -5,36 +5,22 @@ namespace Modules\Base\Http\Controllers;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Modules\Base\Attributes\OperationAction;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Dictionary;
 use Modules\Base\Models\DictionaryCategory;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\OperationAction;
 use Siushin\Util\Traits\ParamTool;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
- * 控制器：字典
+ * 控制器：数据字典
  * @module 数据字典
  */
 class DictionaryController extends Controller
 {
     use ParamTool;
-
-    /**
-     * 数据字典列表（分页）
-     * @param Request $request
-     * @return JsonResponse
-     * @throws Exception
-     * @author siushin<siushin@163.com>
-     */
-    #[OperationAction(OperationActionEnum::index)]
-    public function index(Request $request): JsonResponse
-    {
-        $params = trimParam($request->all());
-        return success(Dictionary::getPageData($params));
-    }
 
     /**
      * 数据字典列表（全部）
@@ -52,7 +38,21 @@ class DictionaryController extends Controller
     }
 
     /**
-     * 新增数据字典
+     * 数据字典列表
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::index)]
+    public function index(Request $request): JsonResponse
+    {
+        $params = trimParam($request->all());
+        return success(Dictionary::getPageData($params));
+    }
+
+    /**
+     * 添加数据字典
      * @param Request $request
      * @return JsonResponse
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -66,7 +66,7 @@ class DictionaryController extends Controller
     }
 
     /**
-     * 编辑数据字典
+     * 更新数据字典
      * @param Request $request
      * @return JsonResponse
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface

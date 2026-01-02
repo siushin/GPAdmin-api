@@ -41,7 +41,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 // API鉴权 管理员 路由组
 Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
-    // 管理员管理
+    // 管理员列表
     Route::post('/admin/index', [AdminController::class, 'index']);
     Route::post('/admin/add', [AdminController::class, 'add']);
     Route::post('/admin/update', [AdminController::class, 'update']);

@@ -5,12 +5,12 @@ namespace Modules\Base\Http\Controllers;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use Modules\Base\Attributes\OperationAction;
 use Modules\Base\Enums\AccountTypeEnum;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Menu;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\OperationAction;
 
 /**
  * 控制器：菜单
@@ -135,7 +135,7 @@ class MenuController extends Controller
     }
 
     /**
-     * 新增菜单
+     * 添加菜单
      * @return JsonResponse
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @author siushin<siushin@163.com>
@@ -148,7 +148,7 @@ class MenuController extends Controller
     }
 
     /**
-     * 编辑菜单
+     * 更新菜单
      * @return JsonResponse
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @author siushin<siushin@163.com>

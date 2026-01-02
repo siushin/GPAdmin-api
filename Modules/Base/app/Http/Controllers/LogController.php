@@ -5,7 +5,6 @@ namespace Modules\Base\Http\Controllers;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Modules\Base\Attributes\OperationAction;
 use Modules\Base\Enums\BrowserEnum;
 use Modules\Base\Enums\DeviceTypeEnum;
 use Modules\Base\Enums\HttpMethodEnum;
@@ -17,16 +16,17 @@ use Modules\Base\Models\AuditLog;
 use Modules\Base\Models\GeneralLog;
 use Modules\Base\Models\LoginLog;
 use Modules\Base\Models\OperationLog;
+use Siushin\LaravelTool\Attributes\OperationAction;
 use Siushin\LaravelTool\Enums\RequestSourceEnum;
 
 /**
- * 控制器：日志
- * @module 日志管理
+ * 控制器：系统日志
+ * @module 系统日志
  */
 class LogController extends Controller
 {
     /**
-     * 常规日志列表（分页）
+     * 常规日志列表
      * @param Request $request
      * @return JsonResponse
      * @throws Exception
@@ -40,7 +40,7 @@ class LogController extends Controller
     }
 
     /**
-     * 操作日志列表（分页）
+     * 操作日志列表
      * @param Request $request
      * @return JsonResponse
      * @throws Exception
@@ -54,7 +54,7 @@ class LogController extends Controller
     }
 
     /**
-     * 审计日志列表（分页）
+     * 审计日志列表
      * @param Request $request
      * @return JsonResponse
      * @throws Exception
@@ -68,7 +68,7 @@ class LogController extends Controller
     }
 
     /**
-     * 登录日志列表（分页）
+     * 登录日志列表
      * @param Request $request
      * @return JsonResponse
      * @throws Exception

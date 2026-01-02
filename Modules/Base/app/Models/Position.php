@@ -62,7 +62,7 @@ class Position extends Model
     }
 
     /**
-     * 获取职位列表（分页）
+     * 获取职位列表
      * @param array $params
      * @return array
      * @throws Exception

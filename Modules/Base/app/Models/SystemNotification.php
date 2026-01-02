@@ -42,7 +42,7 @@ class SystemNotification extends Model
     const int STATUS_NORMAL  = 1;   // 正常
 
     /**
-     * 获取系统通知列表（分页）
+     * 获取系统通知列表
      * @param array $params
      * @return array
      * @throws Exception

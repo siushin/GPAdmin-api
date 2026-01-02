@@ -5,11 +5,11 @@ namespace Modules\Base\Http\Controllers;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Modules\Base\Attributes\OperationAction;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Company;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\OperationAction;
 
 /**
  * 控制器：公司管理
@@ -45,7 +45,7 @@ class CompanyController extends Controller
     }
 
     /**
-     * 新增公司
+     * 添加公司
      * @return JsonResponse
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @author siushin<siushin@163.com>
@@ -58,7 +58,7 @@ class CompanyController extends Controller
     }
 
     /**
-     * 编辑公司
+     * 更新公司
      * @return JsonResponse
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @author siushin<siushin@163.com>

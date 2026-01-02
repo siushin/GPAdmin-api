@@ -25,7 +25,7 @@ menu,角色管理,menu.role,/menu/role,ProfileOutlined,menu,./Menu/Role,,0,1
 menu,菜单管理,menu.menu,/menu/menu,BlockOutlined,menu,./Menu/Menu,,0,1
 ,,,,,,,,,,
 ,系统管理,system,/system,SettingOutlined,menu,,/system/admin,0,1
-system,管理员管理,system.admin,/system/admin,UserOutlined,menu,./System/Admin,,0,1
+system,管理员列表,system.admin,/system/admin,UserOutlined,menu,./System/Admin,,0,1
 system,数据字典,system.dict,/system/dict,BookOutlined,menu,./System/Dict,,0,1
 system,数据字典（树状）,system.dictTree,/system/dictTree,BookOutlined,menu,./System/DictTree,,0,1
 system,系统日志,system.log,/system/log,FileTextOutlined,menu,./System/Log,,0,1

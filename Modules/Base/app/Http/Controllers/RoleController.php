@@ -4,11 +4,11 @@ namespace Modules\Base\Http\Controllers;
 
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Modules\Base\Attributes\OperationAction;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Role;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\OperationAction;
 
 /**
  * 控制器：角色
@@ -43,7 +43,7 @@ class RoleController extends Controller
     }
 
     /**
-     * 新增角色
+     * 添加角色
      * @return JsonResponse
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @author siushin<siushin@163.com>
@@ -56,7 +56,7 @@ class RoleController extends Controller
     }
 
     /**
-     * 编辑角色
+     * 更新角色
      * @return JsonResponse
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @author siushin<siushin@163.com>

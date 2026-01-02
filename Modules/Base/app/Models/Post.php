@@ -64,7 +64,7 @@ class Post extends Model
     }
 
     /**
-     * 获取岗位列表（分页）
+     * 获取岗位列表
      * @param array $params
      * @return array
      * @throws Exception

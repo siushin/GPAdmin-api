@@ -2,7 +2,7 @@
 
 namespace Modules\Base\Enums;
 
-use Modules\Base\Attributes\DescriptionAttribute;
+use Siushin\LaravelTool\Attributes\DescriptionAttribute;
 
 /**
  * 枚举：账号状态

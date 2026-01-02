@@ -41,7 +41,7 @@ class Message extends Model
     const int STATUS_READ   = 1;   // 已读
 
     /**
-     * 获取站内信列表（分页）
+     * 获取站内信列表
      * @param array $params
      * @return array
      * @throws Exception

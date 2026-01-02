@@ -39,7 +39,7 @@ class User extends Model
     }
 
     /**
-     * 获取用户列表（分页）
+     * 获取用户列表
      * @param array $params
      * @return array
      * @author siushin<siushin@163.com>

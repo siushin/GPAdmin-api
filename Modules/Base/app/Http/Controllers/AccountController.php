@@ -6,7 +6,6 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Modules\Base\Attributes\OperationAction;
 use Modules\Base\Enums\AccountTypeEnum;
 use Modules\Base\Enums\LogActionEnum;
 use Modules\Base\Enums\OperationActionEnum;
@@ -21,6 +20,7 @@ use Modules\Sms\Services\SmsService;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\SimpleCache\InvalidArgumentException;
+use Siushin\LaravelTool\Attributes\OperationAction;
 use Siushin\LaravelTool\Enums\RequestSourceEnum;
 use Siushin\LaravelTool\Enums\SocialTypeEnum;
 
@@ -56,7 +56,7 @@ class AccountController extends Controller
      * 用户登录（用户名+密码）
      * @param Request $request
      * @return JsonResponse
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     #[OperationAction(OperationActionEnum::login)]
@@ -91,7 +91,7 @@ class AccountController extends Controller
      * 用户登录（手机号+验证码）
      * @param Request $request
      * @return JsonResponse
-     * @throws ContainerExceptionInterface|InvalidArgumentException|NotFoundExceptionInterface
+     * @throws InvalidArgumentException
      * @author siushin<siushin@163.com>
      */
     #[OperationAction(OperationActionEnum::login)]
@@ -215,7 +215,7 @@ class AccountController extends Controller
      * 用户注册
      * @param Request $request
      * @return JsonResponse
-     * @throws ContainerExceptionInterface|InvalidArgumentException|NotFoundExceptionInterface
+     * @throws InvalidArgumentException
      * @author siushin<siushin@163.com>
      */
     #[OperationAction(OperationActionEnum::add)]
@@ -326,7 +326,7 @@ class AccountController extends Controller
      * 重置密码
      * @param Request $request
      * @return JsonResponse
-     * @throws ContainerExceptionInterface|InvalidArgumentException|NotFoundExceptionInterface
+     * @throws InvalidArgumentException
      * @author siushin<siushin@163.com>
      */
     #[OperationAction(OperationActionEnum::update)]

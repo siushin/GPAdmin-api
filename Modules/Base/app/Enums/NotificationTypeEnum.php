@@ -2,7 +2,7 @@
 
 namespace Modules\Base\Enums;
 
-use Modules\Base\Attributes\DescriptionAttribute;
+use Siushin\LaravelTool\Attributes\DescriptionAttribute;
 
 /**
  * 枚举：通知类型
@@ -10,12 +10,12 @@ use Modules\Base\Attributes\DescriptionAttribute;
 enum NotificationTypeEnum: string
 {
     #[DescriptionAttribute('系统通知')]
-    case System = 'system';
+    case System   = 'system';
     #[DescriptionAttribute('业务通知')]
     case Business = 'business';
     #[DescriptionAttribute('活动通知')]
     case Activity = 'activity';
     #[DescriptionAttribute('其他')]
-    case Other = 'other';
+    case Other    = 'other';
 }
 

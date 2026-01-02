@@ -4,7 +4,6 @@ namespace Modules\Base\Http\Controllers;
 
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Modules\Base\Attributes\OperationAction;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Admin;
 use Modules\Base\Models\AuditLog;
@@ -14,15 +13,15 @@ use Modules\Base\Models\OperationLog;
 use Siushin\Util\Traits\ParamTool;
 
 /**
- * 控制器：管理员管理
- * @module 管理员管理
+ * 控制器：管理员列表
+ * @module 管理员列表
  */
 class AdminController extends Controller
 {
     use ParamTool;
 
     /**
-     * 获取管理员列表（分页）
+     * 管理员列表
      * @return JsonResponse
      * @author siushin<siushin@163.com>
      */
@@ -34,7 +33,7 @@ class AdminController extends Controller
     }
 
     /**
-     * 新增管理员
+     * 添加管理员
      * @return JsonResponse
      * @throws Exception
      * @author siushin<siushin@163.com>

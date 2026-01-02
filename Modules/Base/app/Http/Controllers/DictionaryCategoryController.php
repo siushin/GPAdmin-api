@@ -4,13 +4,13 @@ namespace Modules\Base\Http\Controllers;
 
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Modules\Base\Attributes\OperationAction;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\DictionaryCategory;
+use Siushin\LaravelTool\Attributes\OperationAction;
 
 /**
  * 控制器：数据字典分类
- * @module 数据字典
+ * @module 数据字典分类
  */
 class DictionaryCategoryController extends Controller
 {

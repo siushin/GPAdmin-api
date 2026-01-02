@@ -5,7 +5,6 @@ namespace Modules\Base\Http\Controllers;
 use Exception;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
-use Modules\Base\Attributes\OperationAction;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Enums\ResourceTypeEnum;
 use Modules\Base\Enums\SysParamFlagEnum;
@@ -14,6 +13,7 @@ use Modules\Base\Models\DictionaryCategory;
 use Modules\Base\Models\Organization;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\OperationAction;
 use Siushin\LaravelTool\Traits\ModelTool;
 use Siushin\Util\Traits\ParamTool;
 use Siushin\Util\Utils\TreeHtmlFormatter;
@@ -44,7 +44,7 @@ class OrganizationController extends Controller
     }
 
     /**
-     * 新增组织架构类型
+     * 添加组织架构类型
      * @return JsonResponse
      * @throws Exception
      * @author siushin<siushin@163.com>
@@ -243,7 +243,7 @@ class OrganizationController extends Controller
     }
 
     /**
-     * 新增组织架构
+     * 添加组织架构
      * @return JsonResponse
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @author siushin<siushin@163.com>

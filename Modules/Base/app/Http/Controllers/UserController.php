@@ -4,13 +4,13 @@ namespace Modules\Base\Http\Controllers;
 
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Modules\Base\Attributes\OperationAction;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\AuditLog;
 use Modules\Base\Models\GeneralLog;
 use Modules\Base\Models\LoginLog;
 use Modules\Base\Models\OperationLog;
 use Modules\Base\Models\User;
+use Siushin\LaravelTool\Attributes\OperationAction;
 use Siushin\Util\Traits\ParamTool;
 use Throwable;
 
@@ -23,7 +23,7 @@ class UserController extends Controller
     use ParamTool;
 
     /**
-     * 获取用户列表（分页）
+     * 获取用户列表
      * @return JsonResponse
      * @author siushin<siushin@163.com>
      */
@@ -35,7 +35,7 @@ class UserController extends Controller
     }
 
     /**
-     * 新增用户
+     * 添加用户
      * @return JsonResponse
      * @throws Exception|Throwable
      * @author siushin<siushin@163.com>

@@ -37,7 +37,7 @@ class Dictionary extends Model
     private static array $auto_ins_same_key_value = [];
 
     /**
-     * 获取数据字典列表（分页）
+     * 获取数据字典列表
      * @param array $params
      * @return array
      * @throws Exception
@@ -51,7 +51,6 @@ class Dictionary extends Model
             'category_id'      => '=',
             'dictionary_name'  => 'like',
             'dictionary_value' => 'like',
-            // 'dictionary_desc'  => 'like',
             'sys_param_flag'   => '=',
             'date_range'       => 'created_at',
             'time_range'       => 'created_at',

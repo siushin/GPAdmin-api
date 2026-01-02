@@ -2,7 +2,7 @@
 
 namespace Modules\Base\Enums;
 
-use Modules\Base\Attributes\DescriptionAttribute;
+use Siushin\LaravelTool\Attributes\DescriptionAttribute;
 
 /**
  * 枚举：目标平台
@@ -10,11 +10,11 @@ use Modules\Base\Attributes\DescriptionAttribute;
 enum TargetPlatformEnum: string
 {
     #[DescriptionAttribute('全平台')]
-    case All = 'all';
+    case All     = 'all';
     #[DescriptionAttribute('用户端')]
-    case User = 'user';
+    case User    = 'user';
     #[DescriptionAttribute('管理端')]
-    case Admin = 'admin';
+    case Admin   = 'admin';
     #[DescriptionAttribute('小程序')]
     case Miniapp = 'miniapp';
 }

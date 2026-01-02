@@ -47,7 +47,7 @@ class Menu extends Model
     ];
 
     /**
-     * 获取菜单列表（分页）
+     * 获取菜单列表
      * @param array $params
      * @return array
      * @throws Exception

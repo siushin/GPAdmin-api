@@ -40,7 +40,7 @@ class Admin extends Model
     }
 
     /**
-     * 获取管理员列表（分页）
+     * 获取管理员列表
      * @param array $params
      * @return array
      * @author siushin<siushin@163.com>
@@ -219,7 +219,7 @@ class Admin extends Model
             logAudit(
                 request(),
                 currentUserId(),
-                '管理员管理',
+                '管理员列表',
                 OperationActionEnum::add->value,
                 ResourceTypeEnum::user->value,
                 $account->id,
@@ -290,7 +290,7 @@ class Admin extends Model
             logAudit(
                 request(),
                 currentUserId(),
-                '管理员管理',
+                '管理员列表',
                 OperationActionEnum::update->value,
                 ResourceTypeEnum::user->value,
                 $account->id,
@@ -335,7 +335,7 @@ class Admin extends Model
         logAudit(
             request(),
             currentUserId(),
-            '管理员管理',
+            '管理员列表',
             OperationActionEnum::delete->value,
             ResourceTypeEnum::user->value,
             $account->id,

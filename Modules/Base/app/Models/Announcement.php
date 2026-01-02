@@ -42,7 +42,7 @@ class Announcement extends Model
     const int STATUS_NORMAL  = 1;   // 正常
 
     /**
-     * 获取公告列表（分页）
+     * 获取公告列表
      * @param array $params
      * @return array
      * @throws Exception

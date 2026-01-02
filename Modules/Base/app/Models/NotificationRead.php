@@ -29,7 +29,7 @@ class NotificationRead extends Model
     ];
 
     /**
-     * 获取通知查看记录列表（分页）
+     * 获取通知查看记录列表
      * @param array $params 必须包含 read_type 和 target_id
      * @return array
      * @throws Exception

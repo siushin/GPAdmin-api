@@ -4,11 +4,11 @@ namespace Modules\Base\Http\Controllers;
 
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Modules\Base\Attributes\OperationAction;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Message;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\OperationAction;
 
 /**
  * 控制器：站内信管理
@@ -17,8 +17,9 @@ use Psr\Container\NotFoundExceptionInterface;
 class MessageController extends Controller
 {
     /**
-     * 获取站内信列表（分页）
+     * 获取站内信列表
      * @return JsonResponse
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     #[OperationAction(OperationActionEnum::index)]
@@ -29,9 +30,10 @@ class MessageController extends Controller
     }
 
     /**
-     * 新增站内信
+     * 添加站内信
      * @return JsonResponse
-     * @throws Exception
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      * @author siushin<siushin@163.com>
      */
     #[OperationAction(OperationActionEnum::add)]
@@ -44,7 +46,8 @@ class MessageController extends Controller
     /**
      * 更新站内信
      * @return JsonResponse
-     * @throws Exception
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      * @author siushin<siushin@163.com>
      */
     #[OperationAction(OperationActionEnum::update)]
@@ -57,7 +60,8 @@ class MessageController extends Controller
     /**
      * 删除站内信
      * @return JsonResponse
-     * @throws Exception
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      * @author siushin<siushin@163.com>
      */
     #[OperationAction(OperationActionEnum::delete)]

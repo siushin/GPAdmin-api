@@ -64,7 +64,7 @@ class Company extends Model
     }
 
     /**
-     * 获取公司列表（分页）
+     * 获取公司列表
      * @param array $params
      * @return array
      * @throws Exception

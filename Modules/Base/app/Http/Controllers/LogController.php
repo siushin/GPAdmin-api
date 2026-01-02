@@ -16,13 +16,11 @@ use Modules\Base\Models\AuditLog;
 use Modules\Base\Models\GeneralLog;
 use Modules\Base\Models\LoginLog;
 use Modules\Base\Models\OperationLog;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 use Siushin\LaravelTool\Enums\RequestSourceEnum;
 
-/**
- * 控制器：系统日志
- * @module 系统日志
- */
+#[ControllerName('系统日志')]
 class LogController extends Controller
 {
     /**

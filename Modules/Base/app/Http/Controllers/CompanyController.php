@@ -9,12 +9,10 @@ use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Company;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 
-/**
- * 控制器：公司管理
- * @module 组织架构管理
- */
+#[ControllerName('公司管理')]
 class CompanyController extends Controller
 {
     /**

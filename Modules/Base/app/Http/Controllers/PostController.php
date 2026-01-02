@@ -9,12 +9,10 @@ use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Post;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 
-/**
- * 控制器：岗位管理
- * @module 组织架构管理
- */
+#[ControllerName('岗位管理')]
 class PostController extends Controller
 {
     /**

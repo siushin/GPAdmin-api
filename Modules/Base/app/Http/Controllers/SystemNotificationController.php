@@ -8,12 +8,10 @@ use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\SystemNotification;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 
-/**
- * 控制器：系统通知管理
- * @module 通知管理
- */
+#[ControllerName('系统通知')]
 class SystemNotificationController extends Controller
 {
     /**

@@ -10,14 +10,12 @@ use Modules\Base\Models\GeneralLog;
 use Modules\Base\Models\LoginLog;
 use Modules\Base\Models\OperationLog;
 use Modules\Base\Models\User;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 use Siushin\Util\Traits\ParamTool;
 use Throwable;
 
-/**
- * 控制器：用户管理
- * @module 用户管理
- */
+#[ControllerName('用户列表')]
 class UserController extends Controller
 {
     use ParamTool;

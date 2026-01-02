@@ -6,12 +6,10 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\NotificationRead;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 
-/**
- * 控制器：通知查看记录管理
- * @module 通知管理
- */
+#[ControllerName('通知查看记录')]
 class NotificationReadController extends Controller
 {
     /**

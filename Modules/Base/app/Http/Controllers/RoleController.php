@@ -8,12 +8,10 @@ use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Role;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 
-/**
- * 控制器：角色
- * @module 角色管理
- */
+#[ControllerName('角色管理')]
 class RoleController extends Controller
 {
     /**

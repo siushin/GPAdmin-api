@@ -9,12 +9,10 @@ use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Department;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 
-/**
- * 控制器：部门管理
- * @module 组织架构管理
- */
+#[ControllerName('部门管理')]
 class DepartmentController extends Controller
 {
     /**

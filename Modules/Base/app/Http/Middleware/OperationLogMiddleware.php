@@ -9,6 +9,7 @@ use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Log;
 use Modules\Base\Enums\OperationActionEnum;
 use ReflectionClass;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -71,7 +72,17 @@ class OperationLogMiddleware
                 try {
                     if (class_exists($controllerClass)) {
                         $reflectionClass = new ReflectionClass($controllerClass);
-                        $module = $this->extractModuleFromComment($reflectionClass->getDocComment() ?: '');
+
+                        // 优先从Attribute中提取模块名称（使用ControllerName注解）
+                        $controllerNameAttributes = $reflectionClass->getAttributes(ControllerName::class);
+                        if (!empty($controllerNameAttributes)) {
+                            /** @var ControllerName $controllerNameAttribute */
+                            $controllerNameAttribute = $controllerNameAttributes[0]->newInstance();
+                            $module = $controllerNameAttribute->name;
+                        } else {
+                            // 如果没有Attribute，尝试从注释中提取（向后兼容）
+                            $module = $this->extractModuleFromComment($reflectionClass->getDocComment() ?: '');
+                        }
 
                         // 尝试从方法中提取操作类型和模块名称
                         if ($reflectionClass->hasMethod($methodName)) {

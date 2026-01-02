@@ -20,14 +20,12 @@ use Modules\Sms\Services\SmsService;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\SimpleCache\InvalidArgumentException;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 use Siushin\LaravelTool\Enums\RequestSourceEnum;
 use Siushin\LaravelTool\Enums\SocialTypeEnum;
 
-/**
- * 控制器：账号
- * @module 账号管理
- */
+#[ControllerName('账号管理')]
 class AccountController extends Controller
 {
     /**

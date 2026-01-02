@@ -10,12 +10,10 @@ use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Menu;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 
-/**
- * 控制器：菜单
- * @module 菜单管理
- */
+#[ControllerName('菜单管理')]
 class MenuController extends Controller
 {
     /**

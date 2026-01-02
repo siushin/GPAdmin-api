@@ -10,12 +10,11 @@ use Modules\Base\Models\AuditLog;
 use Modules\Base\Models\GeneralLog;
 use Modules\Base\Models\LoginLog;
 use Modules\Base\Models\OperationLog;
+use Siushin\LaravelTool\Attributes\ControllerName;
+use Siushin\LaravelTool\Attributes\OperationAction;
 use Siushin\Util\Traits\ParamTool;
 
-/**
- * 控制器：管理员列表
- * @module 管理员列表
- */
+#[ControllerName('管理员列表')]
 class AdminController extends Controller
 {
     use ParamTool;

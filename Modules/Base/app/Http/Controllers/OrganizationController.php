@@ -13,16 +13,14 @@ use Modules\Base\Models\DictionaryCategory;
 use Modules\Base\Models\Organization;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 use Siushin\LaravelTool\Traits\ModelTool;
 use Siushin\Util\Traits\ParamTool;
 use Siushin\Util\Utils\TreeHtmlFormatter;
 use Throwable;
 
-/**
- * 控制器：组织架构
- * @module 组织架构
- */
+#[ControllerName('组织架构')]
 class OrganizationController extends Controller
 {
     use ParamTool, ModelTool;

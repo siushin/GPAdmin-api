@@ -11,12 +11,10 @@ use Modules\Base\Enums\LogActionEnum;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Sms\Services\SmsService;
 use Psr\SimpleCache\InvalidArgumentException;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 
-/**
- * 控制器：短信服务
- * @module 短信服务
- */
+#[ControllerName('短信服务')]
 class SmsController extends Controller
 {
     /**

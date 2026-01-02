@@ -9,12 +9,10 @@ use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\File;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 
-/**
- * 控制器：文件
- * @module 文件管理
- */
+#[ControllerName('文件管理')]
 class FileController extends Controller
 {
     /**

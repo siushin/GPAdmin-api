@@ -10,14 +10,12 @@ use Modules\Base\Models\Dictionary;
 use Modules\Base\Models\DictionaryCategory;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 use Siushin\Util\Traits\ParamTool;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
-/**
- * 控制器：数据字典
- * @module 数据字典
- */
+#[ControllerName('数据字典')]
 class DictionaryController extends Controller
 {
     use ParamTool;

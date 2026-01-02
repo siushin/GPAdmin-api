@@ -8,12 +8,10 @@ use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Message;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 
-/**
- * 控制器：站内信管理
- * @module 通知管理
- */
+#[ControllerName('站内信')]
 class MessageController extends Controller
 {
     /**

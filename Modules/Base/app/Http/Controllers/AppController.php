@@ -8,12 +8,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Modules\Base\Enums\OperationActionEnum;
 use Nwidart\Modules\Facades\Module;
+use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 
-/**
- * 控制器：应用管理
- * @module 应用管理
- */
+#[ControllerName('应用管理')]
 class AppController extends Controller
 {
     /**

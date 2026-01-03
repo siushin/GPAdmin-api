@@ -11,6 +11,7 @@ use Modules\Base\Models\Account;
 use Modules\Base\Models\AccountProfile;
 use Modules\Base\Models\AccountSocial;
 use Modules\Base\Models\Admin;
+use Modules\Base\Models\Company;
 use Modules\Base\Models\User;
 use Siushin\LaravelTool\Enums\GenderTypeEnum;
 use Siushin\LaravelTool\Enums\SocialTypeEnum;
@@ -79,11 +80,19 @@ class AccountSeeder extends Seeder
             );
         }
 
+        // 获取公司ID（绑定到默认公司）
+        $companyId = null;
+        $companyName = env('APP_COMPANY', '默认公司');
+        $company = Company::query()->where('company_name', $companyName)->first();
+        if ($company) {
+            $companyId = $company->company_id;
+        }
+
         // 创建管理员信息（标记为超级管理员）
         Admin::query()->create([
             'id'         => generateId(),
             'account_id' => $account->id,
-            'company_id' => null,
+            'company_id' => $companyId,
             'is_super'   => 1,
         ]);
     }

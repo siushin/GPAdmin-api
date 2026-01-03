@@ -14,7 +14,6 @@ use Modules\Base\Models\Account;
 use Modules\Base\Models\AccountProfile;
 use Modules\Base\Models\AccountSocial;
 use Modules\Base\Services\AuthService;
-use Modules\Base\Services\LogService;
 use Modules\Sms\Enums\SmsTypeEnum;
 use Modules\Sms\Services\SmsService;
 use Psr\Container\ContainerExceptionInterface;
@@ -38,16 +37,10 @@ class AccountController extends Controller
      */
     private SmsService $smsService;
 
-    /**
-     * 日志服务
-     */
-    private LogService $logService;
-
-    public function __construct(AuthService $authService, SmsService $smsService, LogService $logService)
+    public function __construct(AuthService $authService, SmsService $smsService)
     {
         $this->authService = $authService;
         $this->smsService = $smsService;
-        $this->logService = $logService;
     }
 
     /**

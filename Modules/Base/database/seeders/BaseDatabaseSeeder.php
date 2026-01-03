@@ -12,14 +12,14 @@ class BaseDatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            AccountSeeder::class,
             CompanySeeder::class,
             DictionarySeeder::class,
-            // LogSeeder::class,
-            MenuSeeder::class,
-            NotificationSeeder::class,
             OrganizationSeeder::class,
+            AccountSeeder::class,
+            MenuSeeder::class,
             RbacSeeder::class,
+            // LogSeeder::class,
+            // NotificationSeeder::class,
         ]);
     }
 }

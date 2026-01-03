@@ -126,7 +126,7 @@ class Admin extends Model
                     'account_id'          => $account->id,
                     'username'            => $account->username,
                     'nickname'            => $profile?->nickname,
-                    'mobile'              => $phone,
+                    'phone'               => $phone,
                     'email'               => $email,
                     'account_type'        => $account->account_type->value,
                     'status'              => $account->status,
@@ -185,10 +185,10 @@ class Admin extends Model
             }
 
             // 检查手机号是否已存在
-            if (!empty($params['mobile'])) {
+            if (!empty($params['phone'])) {
                 $existingPhone = AccountSocial::query()
                     ->where('social_type', SocialTypeEnum::Phone->value)
-                    ->where('social_account', $params['mobile'])
+                    ->where('social_account', $params['phone'])
                     ->exists();
                 if ($existingPhone) {
                     throw_exception('手机号已被使用');
@@ -231,11 +231,11 @@ class Admin extends Model
             }
 
             // 创建手机号社交账号记录
-            if (!empty($params['mobile'])) {
+            if (!empty($params['phone'])) {
                 AccountSocial::create([
                     'account_id'     => $account->id,
                     'social_type'    => SocialTypeEnum::Phone->value,
-                    'social_account' => $params['mobile'],
+                    'social_account' => $params['phone'],
                     'is_verified'    => false,
                 ]);
             }
@@ -265,7 +265,7 @@ class Admin extends Model
                 "新增管理员: {$account->username}"
             );
 
-            return ['id' => $account->id];
+            return ['account_id' => $account->id];
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
@@ -288,7 +288,10 @@ class Admin extends Model
 
         DB::beginTransaction();
         try {
-            $account = Account::query()->findOrFail($accountId);
+            $account = Account::query()->find($accountId);
+            if (!$account) {
+                throw_exception('账号不存在，请刷新后重试');
+            }
             if ($account->account_type !== AccountTypeEnum::Admin) {
                 throw_exception('该账号不是管理员账号');
             }
@@ -306,10 +309,10 @@ class Admin extends Model
             $newCompanyId = $params['company_id'] ?? $oldCompanyId;
 
             // 检查手机号是否已被其他账号使用
-            if (!empty($params['mobile'])) {
+            if (!empty($params['phone'])) {
                 $existingPhone = AccountSocial::query()
                     ->where('social_type', SocialTypeEnum::Phone->value)
-                    ->where('social_account', $params['mobile'])
+                    ->where('social_account', $params['phone'])
                     ->where('account_id', '!=', $accountId)
                     ->exists();
                 if ($existingPhone) {
@@ -401,25 +404,25 @@ class Admin extends Model
             }
 
             // 更新或创建手机号社交账号记录
-            if (isset($params['mobile'])) {
+            if (isset($params['phone'])) {
                 $phoneSocial = AccountSocial::query()
                     ->where('account_id', $accountId)
                     ->where('social_type', SocialTypeEnum::Phone->value)
                     ->first();
-                if (empty($params['mobile'])) {
+                if (empty($params['phone'])) {
                     // 如果手机号为空，删除记录
                     if ($phoneSocial) {
                         $phoneSocial->delete();
                     }
                 } else {
                     if ($phoneSocial) {
-                        $phoneSocial->social_account = $params['mobile'];
+                        $phoneSocial->social_account = $params['phone'];
                         $phoneSocial->save();
                     } else {
                         AccountSocial::create([
                             'account_id'     => $accountId,
                             'social_type'    => SocialTypeEnum::Phone->value,
-                            'social_account' => $params['mobile'],
+                            'social_account' => $params['phone'],
                             'is_verified'    => false,
                         ]);
                     }

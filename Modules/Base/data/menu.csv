@@ -14,11 +14,9 @@ notif,公告管理,notif.announcement,/notification/announcement,SoundOutlined,m
 app,应用市场,app.market,/app/market,ShopOutlined,menu,./App/Market,,0,1
 app,我的应用,app.my,/app/my,AppstoreOutlined,menu,./App/My,,0,1
 ,,,,,,,,,,
-,组织架构管理,org,/organization,ApartmentOutlined,menu,,/organization/company,0,1
+,公司管理,org,/organization,ApartmentOutlined,menu,,/organization/company,0,1
 org,公司管理,org.company,/organization/company,BankOutlined,menu,./Organization/Company,,0,1
 org,部门管理,org.dept,/organization/department,PartitionOutlined,menu,./Organization/Department,,0,1
-org,职位管理,org.position,/organization/position,SolutionOutlined,menu,./Organization/Position,,0,1
-org,岗位管理,org.post,/organization/post,IdcardOutlined,menu,./Organization/Job,,0,1
 ,,,,,,,,,,
 ,菜单管理,menu,/menu,BlockOutlined,menu,,/menu/role,0,1
 menu,角色管理,menu.role,/menu/role,ProfileOutlined,menu,./Menu/Role,,0,1

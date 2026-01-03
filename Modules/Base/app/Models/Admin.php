@@ -26,7 +26,6 @@ class Admin extends Model
         'id',
         'account_id',
         'company_id',
-        'department_id',
         'is_super',
     ];
 
@@ -101,8 +100,8 @@ class Admin extends Model
                 }
             });
 
-        // 如果有is_super筛选
-        if (isset($params['is_super'])) {
+        // 如果有is_super筛选（需要检查值是否有效，排除空字符串和null）
+        if (isset($params['is_super']) && $params['is_super'] !== '') {
             $query->whereHas('adminInfo', function ($q) use ($params) {
                 $q->where('is_super', $params['is_super']);
             });
@@ -127,13 +126,12 @@ class Admin extends Model
                     'account_id'          => $account->id,
                     'username'            => $account->username,
                     'nickname'            => $profile?->nickname,
-                    'phone'               => $phone,
+                    'mobile'              => $phone,
                     'email'               => $email,
                     'account_type'        => $account->account_type->value,
                     'status'              => $account->status,
                     'is_super'            => $adminInfo?->is_super ?? 0,
                     'company_id'          => $adminInfo?->company_id,
-                    'department_id'       => $adminInfo?->department_id,
                     'last_login_ip'       => $account->last_login_ip,
                     'last_login_location' => getIpLocation($account->last_login_ip),
                     'last_login_time'     => $account->last_login_time?->format('Y-m-d H:i:s'),
@@ -143,11 +141,8 @@ class Admin extends Model
             })
             ->toArray();
 
-        // 批量查询公司名和部门名
+        // 批量查询公司名
         $companyIds = array_filter(array_unique(array_column($list, 'company_id')));
-        $departmentIds = array_filter(array_unique(array_column($list, 'department_id')));
-
-        // 批量查询公司
         $companies = [];
         if (!empty($companyIds)) {
             $companies = Company::query()
@@ -156,19 +151,9 @@ class Admin extends Model
                 ->toArray();
         }
 
-        // 批量查询部门
-        $departments = [];
-        if (!empty($departmentIds)) {
-            $departments = Department::query()
-                ->whereIn('department_id', $departmentIds)
-                ->pluck('department_name', 'department_id')
-                ->toArray();
-        }
-
-        // 遍历数据赋值公司名和部门名
+        // 遍历数据赋值公司名
         foreach ($list as &$item) {
             $item['company_name'] = $companies[$item['company_id']] ?? '';
-            $item['department_name'] = $departments[$item['department_id']] ?? '';
         }
 
         return [
@@ -199,6 +184,28 @@ class Admin extends Model
                 throw_exception('用户名已存在');
             }
 
+            // 检查手机号是否已存在
+            if (!empty($params['mobile'])) {
+                $existingPhone = AccountSocial::query()
+                    ->where('social_type', SocialTypeEnum::Phone->value)
+                    ->where('social_account', $params['mobile'])
+                    ->exists();
+                if ($existingPhone) {
+                    throw_exception('手机号已被使用');
+                }
+            }
+
+            // 检查邮箱是否已存在
+            if (!empty($params['email'])) {
+                $existingEmail = AccountSocial::query()
+                    ->where('social_type', SocialTypeEnum::Email->value)
+                    ->where('social_account', $params['email'])
+                    ->exists();
+                if ($existingEmail) {
+                    throw_exception('邮箱已被使用');
+                }
+            }
+
             // 创建账号
             $account = new Account();
             $account->username = $params['username'];
@@ -212,8 +219,36 @@ class Admin extends Model
             $admin->account_id = $account->id;
             $admin->is_super = $params['is_super'] ?? 0;
             $admin->company_id = $params['company_id'] ?? null;
-            $admin->department_id = $params['department_id'] ?? null;
             $admin->save();
+
+            // 创建账号资料
+            if (!empty($params['nickname'])) {
+                AccountProfile::create([
+                    'id'         => generateId(),
+                    'account_id' => $account->id,
+                    'nickname'   => $params['nickname'],
+                ]);
+            }
+
+            // 创建手机号社交账号记录
+            if (!empty($params['mobile'])) {
+                AccountSocial::create([
+                    'account_id'     => $account->id,
+                    'social_type'    => SocialTypeEnum::Phone->value,
+                    'social_account' => $params['mobile'],
+                    'is_verified'    => false,
+                ]);
+            }
+
+            // 创建邮箱社交账号记录
+            if (!empty($params['email'])) {
+                AccountSocial::create([
+                    'account_id'     => $account->id,
+                    'social_type'    => SocialTypeEnum::Email->value,
+                    'social_account' => $params['email'],
+                    'is_verified'    => false,
+                ]);
+            }
 
             DB::commit();
 
@@ -261,6 +296,39 @@ class Admin extends Model
             // 保存旧数据
             $old_data = $account->only(['id', 'username', 'account_type', 'status']);
 
+            // 获取旧的管理员信息
+            $admin = self::query()->where('account_id', $account->id)->first();
+            if (!$admin) {
+                throw_exception('管理员信息不存在');
+            }
+
+            $oldCompanyId = $admin->company_id;
+            $newCompanyId = $params['company_id'] ?? $oldCompanyId;
+
+            // 检查手机号是否已被其他账号使用
+            if (!empty($params['mobile'])) {
+                $existingPhone = AccountSocial::query()
+                    ->where('social_type', SocialTypeEnum::Phone->value)
+                    ->where('social_account', $params['mobile'])
+                    ->where('account_id', '!=', $accountId)
+                    ->exists();
+                if ($existingPhone) {
+                    throw_exception('手机号已被其他账号使用');
+                }
+            }
+
+            // 检查邮箱是否已被其他账号使用
+            if (!empty($params['email'])) {
+                $existingEmail = AccountSocial::query()
+                    ->where('social_type', SocialTypeEnum::Email->value)
+                    ->where('social_account', $params['email'])
+                    ->where('account_id', '!=', $accountId)
+                    ->exists();
+                if ($existingEmail) {
+                    throw_exception('邮箱已被其他账号使用');
+                }
+            }
+
             // 更新账号信息
             if (isset($params['status'])) {
                 $account->status = $params['status'];
@@ -271,18 +339,117 @@ class Admin extends Model
             $account->save();
 
             // 更新管理员信息
-            $admin = self::query()->where('account_id', $account->id)->first();
-            if ($admin) {
-                if (isset($params['is_super'])) {
-                    $admin->is_super = $params['is_super'];
+            if (isset($params['is_super'])) {
+                $admin->is_super = $params['is_super'];
+            }
+            if (isset($params['company_id'])) {
+                $admin->company_id = $params['company_id'];
+            }
+            $admin->save();
+
+            // 如果切换了公司，删除旧公司对应的部门关联数据
+            if ($oldCompanyId && $newCompanyId && $oldCompanyId != $newCompanyId) {
+                // 获取旧公司的所有部门ID
+                $oldDepartmentIds = Department::query()
+                    ->where('company_id', $oldCompanyId)
+                    ->pluck('department_id')
+                    ->toArray();
+
+                if (!empty($oldDepartmentIds)) {
+                    // 删除该账号在旧公司部门下的所有关联记录
+                    $deletedCount = DB::table('gpa_account_department')
+                        ->where('account_id', $accountId)
+                        ->where('account_type', AccountTypeEnum::Admin->value)
+                        ->whereIn('department_id', $oldDepartmentIds)
+                        ->delete();
+
+                    // 记录删除部门关联的日志
+                    if ($deletedCount > 0) {
+                        logAudit(
+                            request(),
+                            currentUserId(),
+                            '管理员列表',
+                            OperationActionEnum::delete->value,
+                            ResourceTypeEnum::user->value,
+                            $accountId,
+                            [
+                                'company_id'     => $oldCompanyId,
+                                'department_ids' => $oldDepartmentIds,
+                                'deleted_count'  => $deletedCount,
+                                'reason'         => '切换公司，删除旧公司部门关联',
+                            ],
+                            null,
+                            "管理员切换公司，删除旧公司({$oldCompanyId})的部门关联数据，共删除 {$deletedCount} 条记录"
+                        );
+                    }
                 }
-                if (isset($params['company_id'])) {
-                    $admin->company_id = $params['company_id'];
+            }
+
+            // 更新或创建账号资料
+            $profile = AccountProfile::query()->where('account_id', $accountId)->first();
+            if (!empty($params['nickname'])) {
+                if ($profile) {
+                    $profile->nickname = $params['nickname'];
+                    $profile->save();
+                } else {
+                    AccountProfile::create([
+                        'id'         => generateId(),
+                        'account_id' => $accountId,
+                        'nickname'   => $params['nickname'],
+                    ]);
                 }
-                if (isset($params['department_id'])) {
-                    $admin->department_id = $params['department_id'];
+            }
+
+            // 更新或创建手机号社交账号记录
+            if (isset($params['mobile'])) {
+                $phoneSocial = AccountSocial::query()
+                    ->where('account_id', $accountId)
+                    ->where('social_type', SocialTypeEnum::Phone->value)
+                    ->first();
+                if (empty($params['mobile'])) {
+                    // 如果手机号为空，删除记录
+                    if ($phoneSocial) {
+                        $phoneSocial->delete();
+                    }
+                } else {
+                    if ($phoneSocial) {
+                        $phoneSocial->social_account = $params['mobile'];
+                        $phoneSocial->save();
+                    } else {
+                        AccountSocial::create([
+                            'account_id'     => $accountId,
+                            'social_type'    => SocialTypeEnum::Phone->value,
+                            'social_account' => $params['mobile'],
+                            'is_verified'    => false,
+                        ]);
+                    }
                 }
-                $admin->save();
+            }
+
+            // 更新或创建邮箱社交账号记录
+            if (isset($params['email'])) {
+                $emailSocial = AccountSocial::query()
+                    ->where('account_id', $accountId)
+                    ->where('social_type', SocialTypeEnum::Email->value)
+                    ->first();
+                if (empty($params['email'])) {
+                    // 如果邮箱为空，删除记录
+                    if ($emailSocial) {
+                        $emailSocial->delete();
+                    }
+                } else {
+                    if ($emailSocial) {
+                        $emailSocial->social_account = $params['email'];
+                        $emailSocial->save();
+                    } else {
+                        AccountSocial::create([
+                            'account_id'     => $accountId,
+                            'social_type'    => SocialTypeEnum::Email->value,
+                            'social_account' => $params['email'],
+                            'is_verified'    => false,
+                        ]);
+                    }
+                }
             }
 
             DB::commit();
@@ -385,13 +552,6 @@ class Admin extends Model
                 ->first();
         }
 
-        // 获取部门信息
-        $department = null;
-        if ($adminInfo?->department_id) {
-            $department = Department::query()
-                ->where('department_id', $adminInfo->department_id)
-                ->first();
-        }
 
         // 处理社交账号信息
         $socialData = [];
@@ -434,14 +594,12 @@ class Admin extends Model
                 'updated_at'          => $profile->updated_at?->format('Y-m-d H:i:s'),
             ] : null,
             'admin'   => $adminInfo ? [
-                'account_id'      => $adminInfo->account_id,
-                'is_super'        => $adminInfo->is_super,
-                'company_id'      => $adminInfo->company_id,
-                'company_name'    => $company?->company_name,
-                'department_id'   => $adminInfo->department_id,
-                'department_name' => $department?->department_name,
-                'created_at'      => $adminInfo->created_at?->format('Y-m-d H:i:s'),
-                'updated_at'      => $adminInfo->updated_at?->format('Y-m-d H:i:s'),
+                'account_id'   => $adminInfo->account_id,
+                'is_super'     => $adminInfo->is_super,
+                'company_id'   => $adminInfo->company_id,
+                'company_name' => $company?->company_name,
+                'created_at'   => $adminInfo->created_at?->format('Y-m-d H:i:s'),
+                'updated_at'   => $adminInfo->updated_at?->format('Y-m-d H:i:s'),
             ] : null,
             'social'  => $socialData,
         ];

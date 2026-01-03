@@ -283,10 +283,6 @@ class Department extends Model
         $hasChildren = self::query()->where('parent_id', $department_id)->exists();
         $hasChildren && throw_exception('该部门下存在子部门，无法删除');
 
-        // 检查是否有职位关联
-        $hasPositions = \Modules\Base\Models\Position::query()->where('department_id', $department_id)->exists();
-        $hasPositions && throw_exception('该部门下存在职位，无法删除');
-
         $old_data = $info->toArray();
         $department_name = $old_data['department_name'];
         $bool = $info->delete();

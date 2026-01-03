@@ -15,8 +15,6 @@ use Modules\Base\Http\Controllers\MenuController;
 use Modules\Base\Http\Controllers\MessageController;
 use Modules\Base\Http\Controllers\NotificationReadController;
 use Modules\Base\Http\Controllers\OrganizationController;
-use Modules\Base\Http\Controllers\PositionController;
-use Modules\Base\Http\Controllers\PostController;
 use Modules\Base\Http\Controllers\RoleController;
 use Modules\Base\Http\Controllers\SystemNotificationController;
 use Modules\Base\Http\Controllers\UserController;
@@ -78,17 +76,6 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
     Route::post('/department/add', [DepartmentController::class, 'add']);
     Route::post('/department/update', [DepartmentController::class, 'update']);
     Route::post('/department/delete', [DepartmentController::class, 'delete']);
-    // 职位管理
-    Route::post('/position/list', [PositionController::class, 'list']);
-    Route::post('/position/index', [PositionController::class, 'index']);
-    Route::post('/position/add', [PositionController::class, 'add']);
-    Route::post('/position/update', [PositionController::class, 'update']);
-    Route::post('/position/delete', [PositionController::class, 'delete']);
-    // 岗位管理
-    Route::post('/post/index', [PostController::class, 'index']);
-    Route::post('/post/add', [PostController::class, 'add']);
-    Route::post('/post/update', [PostController::class, 'update']);
-    Route::post('/post/delete', [PostController::class, 'delete']);
 
     // 菜单管理
     // 角色管理

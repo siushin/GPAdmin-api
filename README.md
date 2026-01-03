@@ -32,7 +32,7 @@ LaravelAPI 是一个基于 Laravel 12 构建的企业级 API 框架，采用模�
 - PHP >= 8.3
 - Composer
 - MySQL >= 5.7
-- PHP 扩展：fileinfo, pdo_mysql
+- PHP 扩展：fileinfo, mbstring, pdo_mysql
 
 ## 📦 安装步骤
 
@@ -50,7 +50,12 @@ cp .env.example .env
 
 # 生成应用密钥
 php artisan key:generate
+
+# 创建符号链接
+php artisan storage:link
 ```
+
+> **注意**：需要确保 php.ini 中 `symlink` 函数未被禁用。
 
 ### 3. 配置数据库
 
@@ -80,6 +85,10 @@ CREATE DATABASE laravel_api CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 composer install
 
 # 或手动执行
+# 初次执行
+php artisan migrate --seed
+
+# 清空所有并重新执行
 php artisan migrate:fresh --seed
 ```
 
@@ -151,6 +160,23 @@ php artisan test
 ./vendor/bin/pint
 ```
 
+### 其他命令
+
+```shell
+# 更新 Composer 的自动加载文件
+composer dump-autoload
+
+# 启用 API 路由
+php artisan install:api
+
+# 发布 CORS（跨源资源共享）配置
+php artisan config:publish cors
+
+# 创建系统枚举类（示例）
+php artisan make:enum DictionaryCategoryEnum
+php artisan make:enum OrganizationTypeEnum
+```
+
 ## 目录结构
 
 | 目录名    | 描述                                                           |
@@ -159,6 +185,21 @@ php artisan test
 | Enums  | 枚举类，一般以 `Enum` 结尾                                            |
 | Funcs  | 助手函数，分以 `Lara` 开头的基于Laravel的助手函数，以及以 `Func`开头的常用助手函数（方便全局搜索） |
 | Traits | 特征，没有明显命名规范，自行查询源码或文档                                        |
+
+## ❓ 常见问题
+
+### 413 Request Entity Too Large
+
+处理方案：
+
+1. **调整 Nginx 配置**
+   - 配置文件中增加或修改 `client_max_body_size` 指令
+   - 例如，将大小设置为 100MB：`http { client_max_body_size 100m; }`
+
+2. **调整 PHP 配置**
+   - 调整 PHP 的 `upload_max_filesize` 和 `post_max_size` 配置项
+   - `upload_max_filesize = 100M`
+   - `post_max_size = 100M`
 
 ## 📁 模块说明
 
@@ -177,6 +218,10 @@ php artisan test
 | Enums  | 枚举类，一般以 `Enum` 结尾                                            |
 | Funcs  | 助手函数，分以 `Lara` 开头的基于 Laravel 的助手函数，以及以 `Func` 开头的常用助手函数（方便全局搜索） |
 | Traits | 特征类，没有明显命名规范，自行查询源码或文档                                        |
+
+## 📖 参考资料
+
+- [overtru 相关扩展包](https://packagist.org/packages/overtrue/)
 
 ## 🧑🏻‍💻 关于作者
 

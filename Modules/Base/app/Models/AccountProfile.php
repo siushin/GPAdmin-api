@@ -18,14 +18,23 @@ class AccountProfile extends Model
         'nickname',
         'gender',
         'avatar',
-        'real_name',
-        'id_card',
         'verification_method',
         'verified_at',
+        'id_card_no',
+        'id_card_name',
+        'id_card_valid_from',
+        'id_card_valid_to',
+        'id_card_issuer',
+        'id_card_front_url',
+        'id_card_back_url',
+        'id_card_verify_status',
     ];
 
     protected $casts = [
-        'verified_at' => 'datetime',
+        'verified_at'           => 'datetime',
+        'id_card_valid_from'    => 'date',
+        'id_card_valid_to'      => 'date',
+        'id_card_verify_status' => 'integer',
     ];
 
     /**

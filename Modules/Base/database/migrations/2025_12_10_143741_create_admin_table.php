@@ -14,13 +14,21 @@ return new class extends Migration {
             $table->id()->comment('管理员ID');
             $table->unsignedBigInteger('account_id')->unique()->comment('账号ID');
             $table->unsignedBigInteger('company_id')->nullable()->comment('所属公司ID');
-            $table->unsignedBigInteger('department_id')->nullable()->comment('所属部门ID');
             $table->tinyInteger('is_super')->default(0)->comment('是否超级管理员：1是，0否');
             $table->timestamps();
 
-            $table->foreign('account_id')->references('id')->on('gpa_account')->onDelete('cascade');
+            $table->foreign('account_id')
+                ->references('id')
+                ->on('gpa_account')
+                ->onDelete('cascade');
+
+            // 关联公司表
+            $table->foreign('company_id')
+                ->references('company_id')
+                ->on('gpa_company')
+                ->onDelete('set null');
+
             $table->index('company_id');
-            $table->index('department_id');
             $table->comment('管理员表');
         });
     }

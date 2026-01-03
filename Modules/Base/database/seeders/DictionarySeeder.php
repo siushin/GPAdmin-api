@@ -36,7 +36,6 @@ class DictionarySeeder extends Seeder
 
         $region_data = [
             ['name' => 'region', 'value' => '行政区划', 'desc' => '标识地区行政层级及归属，如省、市、区 / 县、街道 / 乡镇等'],
-            ['name' => 'company', 'value' => '企业组织架构', 'desc' => '定义企业内部管理架构层级，如总部、事业部、分公司、部门、班组等'],
         ];
         $region_data = collect($region_data)->map(function ($item) {
             return (object)[

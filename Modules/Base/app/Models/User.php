@@ -46,7 +46,7 @@ class User extends Model
      */
     public static function getPageData(array $params): array
     {
-        $page = $params['page'] ?? $params['current'] ?? 1;
+        $page = $params['page'] ?? 1;
         $pageSize = $params['pageSize'] ?? 10;
 
         $query = Account::query()

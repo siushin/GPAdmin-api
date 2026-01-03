@@ -2,10 +2,9 @@
 
 namespace Modules\Base\Database\Seeders;
 
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Modules\Base\Enums\NotificationReadTypeEnum;
-use Modules\Base\Enums\NotificationTypeEnum;
-use Modules\Base\Enums\TargetPlatformEnum;
 use Modules\Base\Models\Account;
 use Modules\Base\Models\Announcement;
 use Modules\Base\Models\Message;
@@ -268,7 +267,7 @@ class NotificationSeeder extends Seeder
             $cities = ['北京', '上海', '深圳', '广州', '杭州', '南京', '济南', '郑州', '成都', '武汉', '长沙', '福州', '合肥', '石家庄', '西安', '沈阳'];
             $province = fake()->randomElement($provinces);
             $city = fake()->randomElement($cities);
-            return "{$province}{$city}";
+            return "$province$city";
         };
 
         // 为系统通知创建查看记录
@@ -279,8 +278,8 @@ class NotificationSeeder extends Seeder
 
             foreach ($readAccountIds as $readAccountId) {
                 // 随机生成查看时间（在通知创建时间之后）
-                $startTime = \Carbon\Carbon::parse($notification->created_at);
-                $endTime = \Carbon\Carbon::now();
+                $startTime = Carbon::parse($notification->created_at);
+                $endTime = Carbon::now();
 
                 // 如果开始时间大于等于结束时间，添加1秒间隔
                 if ($startTime->gte($endTime)) {
@@ -310,8 +309,8 @@ class NotificationSeeder extends Seeder
         foreach ($messages as $message) {
             // 如果站内信状态为已读，则创建查看记录
             if ($message->status === 1) {
-                $startTime = \Carbon\Carbon::parse($message->created_at);
-                $endTime = \Carbon\Carbon::now();
+                $startTime = Carbon::parse($message->created_at);
+                $endTime = Carbon::now();
 
                 // 如果开始时间大于等于结束时间，添加1秒间隔
                 if ($startTime->gte($endTime)) {
@@ -344,9 +343,9 @@ class NotificationSeeder extends Seeder
 
             foreach ($readAccountIds as $readAccountId) {
                 // 随机生成查看时间（在公告创建时间之后，且在结束时间之前）
-                $startTime = \Carbon\Carbon::parse($announcement->created_at);
-                $endTime = $announcement->end_time ? \Carbon\Carbon::parse($announcement->end_time) : null;
-                $now = \Carbon\Carbon::now();
+                $startTime = Carbon::parse($announcement->created_at);
+                $endTime = $announcement->end_time ? Carbon::parse($announcement->end_time) : null;
+                $now = Carbon::now();
 
                 // 确定最大查看时间
                 if ($endTime === null) {

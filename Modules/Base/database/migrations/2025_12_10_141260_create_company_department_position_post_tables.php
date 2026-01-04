@@ -32,26 +32,18 @@ return new class extends Migration {
         // 公司表
         Schema::create('gpa_company', function (Blueprint $table) {
             $table->id('company_id')->comment('公司ID');
-            $table->unsignedBigInteger('organization_id')->nullable()->comment('关联组织架构ID');
             $table->string('company_name')->comment('公司名称');
             $table->string('company_code')->nullable()->comment('公司编码');
             $table->string('company_credit_code', 18)->comment('统一社会信用代码（18位）');
             $table->string('legal_person')->nullable()->comment('法人代表');
             $table->string('contact_phone')->nullable()->comment('联系电话');
             $table->string('contact_email')->nullable()->comment('联系邮箱');
-            $table->string('address')->nullable()->comment('公司地址');
+            $table->string('company_address')->nullable()->comment('公司地址');
             $table->text('company_desc')->nullable()->comment('公司描述');
             $table->tinyInteger('status')->default(1)->comment('状态：1正常，0禁用');
             $table->timestamps();
             $table->softDeletes();
 
-            // 关联组织架构表
-            $table->foreign('organization_id')
-                ->references('organization_id')
-                ->on('gpa_organization')
-                ->onDelete('set null');
-
-            $table->index('organization_id');
             $table->unique(['company_name'], 'unique_company_name');
             $table->unique(['company_code'], 'unique_company_code');
             $table->unique(['company_credit_code'], 'unique_company_credit_code');

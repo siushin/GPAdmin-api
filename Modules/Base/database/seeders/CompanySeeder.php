@@ -27,11 +27,10 @@ class CompanySeeder extends Seeder
                 'company_name'        => $companyName,
                 'company_code'        => env('APP_COMPANY_CODE', 'COMPANY-001'),
                 'company_credit_code' => env('APP_COMPANY_CREDIT_CODE', '911100000000000000'),
-                'organization_id'     => null,
                 'legal_person'        => env('APP_COMPANY_LEGAL_PERSON'),
                 'contact_phone'       => env('APP_COMPANY_PHONE'),
                 'contact_email'       => env('APP_COMPANY_EMAIL'),
-                'address'             => env('APP_COMPANY_ADDRESS'),
+                'company_address'     => env('APP_COMPANY_ADDRESS'),
                 'company_desc'        => env('APP_COMPANY_DESC'),
                 'status'              => 1,
             ]);
@@ -43,7 +42,7 @@ class CompanySeeder extends Seeder
                 'legal_person'        => env('APP_COMPANY_LEGAL_PERSON', $company->legal_person),
                 'contact_phone'       => env('APP_COMPANY_PHONE', $company->contact_phone),
                 'contact_email'       => env('APP_COMPANY_EMAIL', $company->contact_email),
-                'address'             => env('APP_COMPANY_ADDRESS', $company->address),
+                'company_address'     => env('APP_COMPANY_ADDRESS', $company->company_address),
                 'company_desc'        => env('APP_COMPANY_DESC', $company->company_desc),
             ]);
         }

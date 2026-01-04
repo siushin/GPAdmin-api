@@ -46,6 +46,7 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
     Route::post('/admin/delete', [AdminController::class, 'delete']);
     Route::post('/admin/getDetail', [AdminController::class, 'getDetail']);
     Route::post('/admin/getLogs', [AdminController::class, 'getLogs']);
+    Route::post('/admin/batchRemoveFromCompany', [AdminController::class, 'batchRemoveFromCompany']);
 
     // 用户管理
     Route::post('/user/index', [UserController::class, 'index']);

@@ -25,14 +25,13 @@ class Company extends Model
 
     protected $fillable = [
         'company_id',
-        'organization_id',
         'company_code',
         'company_name',
         'company_credit_code',
         'legal_person',
         'contact_phone',
         'contact_email',
-        'address',
+        'company_address',
         'company_desc',
         'status',
     ];
@@ -60,6 +59,7 @@ class Company extends Model
             'company_code'        => 'like',
             'company_credit_code' => 'like',
             'status'              => '=',
+            'date_range'          => 'created_at',
         ], $fields);
     }
 
@@ -77,6 +77,7 @@ class Company extends Model
             'company_code'        => 'like',
             'company_credit_code' => 'like',
             'status'              => '=',
+            'date_range'          => 'created_at',
         ]);
     }
 
@@ -84,7 +85,7 @@ class Company extends Model
      * 新增公司
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface|Exception
      * @author siushin<siushin@163.com>
      */
     public static function addCompany(array $params): array
@@ -120,8 +121,8 @@ class Company extends Model
 
         // 过滤允许的字段
         $allowed_fields = [
-            'organization_id', 'company_code', 'company_name', 'company_credit_code', 'legal_person',
-            'contact_phone', 'contact_email', 'address', 'company_desc', 'status'
+            'company_code', 'company_name', 'company_credit_code', 'legal_person',
+            'contact_phone', 'contact_email', 'company_address', 'company_desc', 'status'
         ];
         $create_data = self::getArrayByKeys($params, $allowed_fields);
 
@@ -154,7 +155,7 @@ class Company extends Model
      * 更新公司
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface|Exception
      * @author siushin<siushin@163.com>
      */
     public static function updateCompany(array $params): array
@@ -201,12 +202,13 @@ class Company extends Model
         $update_data = ['company_name' => $company_name];
 
         // 支持更新其他字段
+        // 注意：使用 array_key_exists 而不是 isset，允许显式传递 null 来清空字段
         $allowed_fields = [
-            'organization_id', 'company_code', 'company_credit_code', 'legal_person',
-            'contact_phone', 'contact_email', 'address', 'company_desc', 'status'
+            'company_code', 'company_credit_code', 'legal_person',
+            'contact_phone', 'contact_email', 'company_address', 'company_desc', 'status'
         ];
         foreach ($allowed_fields as $field) {
-            if (isset($params[$field])) {
+            if (array_key_exists($field, $params)) {
                 $update_data[$field] = $params[$field];
             }
         }
@@ -238,7 +240,7 @@ class Company extends Model
      * 删除公司
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface|Exception
      * @author siushin<siushin@163.com>
      */
     public static function deleteCompany(array $params): array
@@ -249,10 +251,13 @@ class Company extends Model
         $info = self::query()->find($company_id);
         !$info && throw_exception('数据不存在');
 
-        // 检查是否有部门关联（需要先检查是否存在 Department 模型）
-        // 使用完全限定名避免循环依赖
-        $hasDepartments = \Modules\Base\Models\Department::query()->where('company_id', $company_id)->exists();
+        // 检查是否有部门关联
+        $hasDepartments = Department::query()->where('company_id', $company_id)->exists();
         $hasDepartments && throw_exception('该公司下存在部门，无法删除');
+
+        // 检查是否有管理员关联
+        $hasAdmins = Admin::query()->where('company_id', $company_id)->exists();
+        $hasAdmins && throw_exception('该公司下存在管理员，无法删除');
 
         $old_data = $info->toArray();
         $company_name = $old_data['company_name'];

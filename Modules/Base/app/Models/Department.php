@@ -95,7 +95,7 @@ class Department extends Model
      * 新增部门
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface|Exception
      * @author siushin<siushin@163.com>
      */
     public static function addDepartment(array $params): array
@@ -174,7 +174,7 @@ class Department extends Model
      * 更新部门
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface|Exception
      * @author siushin<siushin@163.com>
      */
     public static function updateDepartment(array $params): array
@@ -268,7 +268,7 @@ class Department extends Model
      * 删除部门
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface|Exception
      * @author siushin<siushin@163.com>
      */
     public static function deleteDepartment(array $params): array

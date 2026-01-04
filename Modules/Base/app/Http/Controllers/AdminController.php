@@ -111,5 +111,18 @@ class AdminController extends Controller
             default => throw_exception('不支持的日志类型: ' . $logType),
         };
     }
+
+    /**
+     * 批量移除员工（从公司移除）
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::batchDelete)]
+    public function batchRemoveFromCompany(): JsonResponse
+    {
+        $params = trimParam(request()->all());
+        return success(Admin::batchRemoveFromCompany($params));
+    }
 }
 

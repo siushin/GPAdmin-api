@@ -107,6 +107,13 @@ class Admin extends Model
             });
         }
 
+        // 如果有company_id筛选（需要检查值是否有效，排除空字符串和null）
+        if (isset($params['company_id']) && $params['company_id'] !== '') {
+            $query->whereHas('adminInfo', function ($q) use ($params) {
+                $q->where('company_id', $params['company_id']);
+            });
+        }
+
         $total = $query->count();
         $list = $query->orderBy('id', 'desc')
             ->skip(($page - 1) * $pageSize)
@@ -606,6 +613,116 @@ class Admin extends Model
             ] : null,
             'social'  => $socialData,
         ];
+    }
+
+    /**
+     * 批量移除员工（批量将company_id设置为null，并删除部门关联）
+     * @param array $params
+     * @return array
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    public static function batchRemoveFromCompany(array $params): array
+    {
+        if (empty($params['account_ids']) || !is_array($params['account_ids'])) {
+            throw_exception('缺少 account_ids 参数或参数格式错误');
+        }
+        if (empty($params['company_id'])) {
+            throw_exception('缺少 company_id 参数');
+        }
+
+        $accountIds = $params['account_ids'];
+        $companyId = $params['company_id'];
+
+        DB::beginTransaction();
+        try {
+            // 验证账号是否存在且属于该公司
+            $admins = self::query()
+                ->whereIn('account_id', $accountIds)
+                ->where('company_id', $companyId)
+                ->get();
+
+            if ($admins->isEmpty()) {
+                throw_exception('没有找到属于该公司的管理员账号');
+            }
+
+            $validAccountIds = $admins->pluck('account_id')->toArray();
+            $count = count($validAccountIds);
+
+            // 获取该公司的所有部门ID
+            $departmentIds = Department::query()
+                ->where('company_id', $companyId)
+                ->pluck('department_id')
+                ->toArray();
+
+            // 删除这些账号在该公司部门下的所有关联记录
+            $deletedDepartmentCount = 0;
+            if (!empty($departmentIds)) {
+                $deletedDepartmentCount = DB::table('gpa_account_department')
+                    ->whereIn('account_id', $validAccountIds)
+                    ->where('account_type', AccountTypeEnum::Admin->value)
+                    ->whereIn('department_id', $departmentIds)
+                    ->delete();
+            }
+
+            // 批量将company_id设置为null
+            self::query()
+                ->whereIn('account_id', $validAccountIds)
+                ->where('company_id', $companyId)
+                ->update(['company_id' => null]);
+
+            // 获取账号信息用于日志
+            $accounts = Account::query()
+                ->whereIn('id', $validAccountIds)
+                ->pluck('username', 'id')
+                ->toArray();
+
+            DB::commit();
+
+            // 记录常规日志
+            logGeneral(
+                OperationActionEnum::batchDelete->value,
+                "批量移除员工: 公司ID($companyId), 共移除 $count 个员工, 删除部门关联 $deletedDepartmentCount 条",
+                [
+                    'company_id'               => $companyId,
+                    'account_ids'              => $validAccountIds,
+                    'account_count'            => $count,
+                    'department_ids'           => $departmentIds,
+                    'deleted_department_count' => $deletedDepartmentCount,
+                    'accounts'                 => $accounts,
+                ]
+            );
+
+            // 记录审计日志（批量操作，为每个账号记录一条）
+            foreach ($validAccountIds as $accountId) {
+                $username = $accounts[$accountId] ?? 'ID:' . $accountId;
+                logAudit(
+                    request(),
+                    currentUserId(),
+                    '管理员列表',
+                    OperationActionEnum::update->value,
+                    ResourceTypeEnum::user->value,
+                    $accountId,
+                    [
+                        'company_id'     => $companyId,
+                        'department_ids' => $departmentIds,
+                    ],
+                    [
+                        'company_id'     => null,
+                        'department_ids' => [],
+                    ],
+                    "批量移除员工: 从公司ID($companyId)移除员工($username), 删除部门关联"
+                );
+            }
+
+            return [
+                'count'                    => $count,
+                'deleted_department_count' => $deletedDepartmentCount,
+            ];
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 }
 

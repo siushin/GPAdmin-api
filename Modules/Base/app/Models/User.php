@@ -281,6 +281,11 @@ class User extends Model
         // 保存旧数据
         $old_data = $account->only(['id', 'username', 'account_type', 'status']);
 
+        // 删除账号的所有社交账号记录（释放手机号和邮箱供其他账号使用）
+        AccountSocial::query()
+            ->where('account_id', $accountId)
+            ->delete();
+
         // 删除账号（会级联删除用户信息）
         $account->delete();
 
@@ -547,6 +552,11 @@ class User extends Model
                 try {
                     // 保存旧数据
                     $old_data = $account->only(['id', 'username', 'account_type', 'status']);
+
+                    // 删除账号的所有社交账号记录（释放手机号和邮箱供其他账号使用）
+                    AccountSocial::query()
+                        ->where('account_id', $account->id)
+                        ->delete();
 
                     // 删除账号（会级联删除用户信息）
                     $account->delete();

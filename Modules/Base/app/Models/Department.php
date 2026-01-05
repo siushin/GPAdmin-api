@@ -35,7 +35,7 @@ class Department extends Model
         'parent_id',
         'full_parent_id',
         'status',
-        'sort_order',
+        'sort',
     ];
 
     protected $hidden = [
@@ -114,7 +114,7 @@ class Department extends Model
         $departments = self::query()
             ->whereIn('department_id', $allDepartmentIds)
             ->orderBy('parent_id', 'asc')
-            ->orderBy('sort_order', 'asc')
+            ->orderBy('sort', 'asc')
             ->orderBy('department_id', 'asc')
             ->get()
             ->toArray();
@@ -240,7 +240,7 @@ class Department extends Model
         // 过滤允许的字段
         $allowed_fields = [
             'company_id', 'department_name', 'department_code', 'manager_id',
-            'description', 'parent_id', 'status', 'sort_order'
+            'description', 'parent_id', 'status', 'sort'
         ];
         $create_data = self::getArrayByKeys($params, $allowed_fields);
 
@@ -249,8 +249,8 @@ class Department extends Model
 
         // 设置默认值并处理空字符串
         $create_data['status'] = $create_data['status'] ?? self::STATUS_NORMAL;
-        $create_data['sort_order'] = ($create_data['sort_order'] === '' || $create_data['sort_order'] === null) ? 0 : intval($create_data['sort_order'] ?? 0);
-        $create_data['parent_id'] = ($create_data['parent_id'] === '' || $create_data['parent_id'] === null) ? 0 : intval($create_data['parent_id'] ?? 0);
+        $create_data['sort'] = (isset($create_data['sort']) && $create_data['sort'] !== '' && $create_data['sort'] !== null) ? intval($create_data['sort']) : 0;
+        $create_data['parent_id'] = (isset($create_data['parent_id']) && $create_data['parent_id'] !== '' && $create_data['parent_id'] !== null) ? intval($create_data['parent_id']) : 0;
         // manager_id 是 string 类型，可以为 null，空字符串转换为 null
         if (isset($create_data['manager_id']) && $create_data['manager_id'] === '') {
             $create_data['manager_id'] = null;
@@ -356,7 +356,7 @@ class Department extends Model
         // 支持更新其他字段
         $allowed_fields = [
             'company_id', 'department_code', 'manager_id',
-            'description', 'parent_id', 'status', 'sort_order'
+            'description', 'parent_id', 'status', 'sort'
         ];
         foreach ($allowed_fields as $field) {
             // 使用 array_key_exists 而不是 isset，确保值为 0、false、null 等也能正确更新
@@ -371,8 +371,8 @@ class Department extends Model
                 } elseif ($field === 'manager_id') {
                     // manager_id 字段：空字符串转换为 null（表示没有负责人）
                     $update_data[$field] = ($value === '' || $value === null) ? null : intval($value);
-                } elseif ($field === 'sort_order') {
-                    // sort_order 字段：空字符串转换为 0
+                } elseif ($field === 'sort') {
+                    // sort 字段：空字符串转换为 0
                     $update_data[$field] = ($value === '' || $value === null) ? 0 : intval($value);
                 } else {
                     $update_data[$field] = $value;

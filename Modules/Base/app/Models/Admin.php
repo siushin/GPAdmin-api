@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Modules\Base\Enums\AccountTypeEnum;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Enums\ResourceTypeEnum;
+use Modules\Base\Models\AccountDepartment;
 use Siushin\LaravelTool\Enums\SocialTypeEnum;
 use Siushin\Util\Traits\ParamTool;
 
@@ -111,6 +112,17 @@ class Admin extends Model
         if (isset($params['company_id']) && $params['company_id'] !== '') {
             $query->whereHas('adminInfo', function ($q) use ($params) {
                 $q->where('company_id', $params['company_id']);
+            });
+        }
+
+        // 如果有department_id筛选（需要检查值是否有效，排除空字符串和null）
+        if (isset($params['department_id']) && $params['department_id'] !== '') {
+            $query->whereExists(function ($q) use ($params) {
+                $q->select(DB::raw(1))
+                    ->from('gpa_account_department')
+                    ->whereColumn('gpa_account_department.account_id', 'gpa_account.id')
+                    ->where('gpa_account_department.account_type', AccountTypeEnum::Admin->value)
+                    ->where('gpa_account_department.department_id', $params['department_id']);
             });
         }
 
@@ -244,6 +256,17 @@ class Admin extends Model
             });
         }
 
+        // 如果有department_id筛选（需要检查值是否有效，排除空字符串和null）
+        if (isset($params['department_id']) && $params['department_id'] !== '') {
+            $query->whereExists(function ($q) use ($params) {
+                $q->select(DB::raw(1))
+                    ->from('gpa_account_department')
+                    ->whereColumn('gpa_account_department.account_id', 'gpa_account.id')
+                    ->where('gpa_account_department.account_type', AccountTypeEnum::Admin->value)
+                    ->where('gpa_account_department.department_id', $params['department_id']);
+            });
+        }
+
         $list = $query->orderBy('id', 'desc')
             ->get()
             ->map(function ($account) {
@@ -308,27 +331,50 @@ class Admin extends Model
 
         DB::beginTransaction();
         try {
-            // 检查用户名是否已存在
-            if (Account::query()->where('username', $params['username'])->exists()) {
+            // 检查用户名是否已存在（排除软删除的账号）
+            $existingAccount = Account::query()
+                ->where('username', $params['username'])
+                ->whereNull('deleted_at')
+                ->first();
+            if ($existingAccount) {
                 throw_exception('用户名已存在');
             }
 
-            // 检查手机号是否已存在
+            // 检查是否有被软删除的账号使用了该用户名
+            // 如果有，需要先修改被软删除账号的用户名，或者直接删除该记录
+            $deletedAccount = Account::query()
+                ->withTrashed()
+                ->where('username', $params['username'])
+                ->whereNotNull('deleted_at')
+                ->first();
+            if ($deletedAccount) {
+                // 修改被软删除账号的用户名，添加时间戳后缀，确保唯一性
+                $deletedAccount->username = $params['username'] . '_deleted_' . time();
+                $deletedAccount->save();
+            }
+
+            // 检查手机号是否已存在（排除软删除的账号）
             if (!empty($params['phone'])) {
                 $existingPhone = AccountSocial::query()
                     ->where('social_type', SocialTypeEnum::Phone->value)
                     ->where('social_account', $params['phone'])
+                    ->whereHas('account', function ($q) {
+                        $q->whereNull('deleted_at'); // 排除软删除的账号
+                    })
                     ->exists();
                 if ($existingPhone) {
                     throw_exception('手机号已被使用');
                 }
             }
 
-            // 检查邮箱是否已存在
+            // 检查邮箱是否已存在（排除软删除的账号）
             if (!empty($params['email'])) {
                 $existingEmail = AccountSocial::query()
                     ->where('social_type', SocialTypeEnum::Email->value)
                     ->where('social_account', $params['email'])
+                    ->whereHas('account', function ($q) {
+                        $q->whereNull('deleted_at'); // 排除软删除的账号
+                    })
                     ->exists();
                 if ($existingEmail) {
                     throw_exception('邮箱已被使用');
@@ -377,6 +423,47 @@ class Admin extends Model
                     'social_account' => $params['email'],
                     'is_verified'    => false,
                 ]);
+            }
+
+            // 处理部门关联（department_ids）
+            if (isset($params['department_ids']) && is_array($params['department_ids']) && !empty($params['department_ids'])) {
+                $departmentIds = array_filter($params['department_ids'], function ($id) {
+                    return !empty($id) && $id > 0;
+                });
+
+                if (!empty($departmentIds)) {
+                    $companyId = $admin->company_id;
+
+                    // 验证部门是否属于当前公司
+                    if ($companyId) {
+                        $validDepartments = Department::query()
+                            ->whereIn('department_id', $departmentIds)
+                            ->where('company_id', $companyId)
+                            ->pluck('department_id')
+                            ->toArray();
+
+                        if (count($validDepartments) !== count($departmentIds)) {
+                            throw_exception('部分部门不属于当前公司，无法关联');
+                        }
+                    }
+
+                    // 创建部门关联记录
+                    $insertData = [];
+                    foreach ($departmentIds as $index => $departmentId) {
+                        $insertData[] = [
+                            'account_id'    => $account->id,
+                            'account_type'  => AccountTypeEnum::Admin->value,
+                            'department_id' => $departmentId,
+                            'sort'          => $index,
+                            'created_at'    => now(),
+                            'updated_at'    => now(),
+                        ];
+                    }
+
+                    if (!empty($insertData)) {
+                        AccountDepartment::query()->insert($insertData);
+                    }
+                }
             }
 
             DB::commit();
@@ -437,24 +524,30 @@ class Admin extends Model
             $oldCompanyId = $admin->company_id;
             $newCompanyId = $params['company_id'] ?? $oldCompanyId;
 
-            // 检查手机号是否已被其他账号使用
+            // 检查手机号是否已被其他账号使用（排除软删除的账号）
             if (!empty($params['phone'])) {
                 $existingPhone = AccountSocial::query()
                     ->where('social_type', SocialTypeEnum::Phone->value)
                     ->where('social_account', $params['phone'])
                     ->where('account_id', '!=', $accountId)
+                    ->whereHas('account', function ($q) {
+                        $q->whereNull('deleted_at'); // 排除软删除的账号
+                    })
                     ->exists();
                 if ($existingPhone) {
                     throw_exception('手机号已被其他账号使用');
                 }
             }
 
-            // 检查邮箱是否已被其他账号使用
+            // 检查邮箱是否已被其他账号使用（排除软删除的账号）
             if (!empty($params['email'])) {
                 $existingEmail = AccountSocial::query()
                     ->where('social_type', SocialTypeEnum::Email->value)
                     ->where('social_account', $params['email'])
                     ->where('account_id', '!=', $accountId)
+                    ->whereHas('account', function ($q) {
+                        $q->whereNull('deleted_at'); // 排除软删除的账号
+                    })
                     ->exists();
                 if ($existingEmail) {
                     throw_exception('邮箱已被其他账号使用');
@@ -489,7 +582,7 @@ class Admin extends Model
 
                 if (!empty($oldDepartmentIds)) {
                     // 删除该账号在旧公司部门下的所有关联记录
-                    $deletedCount = DB::table('gpa_account_department')
+                    $deletedCount = AccountDepartment::query()
                         ->where('account_id', $accountId)
                         ->where('account_type', AccountTypeEnum::Admin->value)
                         ->whereIn('department_id', $oldDepartmentIds)
@@ -584,6 +677,52 @@ class Admin extends Model
                 }
             }
 
+            // 处理部门关联（department_ids）
+            if (isset($params['department_ids'])) {
+                // 删除该账号的所有部门关联
+                AccountDepartment::query()
+                    ->where('account_id', $accountId)
+                    ->where('account_type', AccountTypeEnum::Admin->value)
+                    ->delete();
+
+                // 如果传入了部门ID数组，创建新的关联记录
+                if (is_array($params['department_ids']) && !empty($params['department_ids'])) {
+                    $departmentIds = array_filter($params['department_ids'], function ($id) {
+                        return !empty($id) && $id > 0;
+                    });
+
+                    if (!empty($departmentIds)) {
+                        // 验证部门是否属于当前公司
+                        $validDepartments = Department::query()
+                            ->whereIn('department_id', $departmentIds)
+                            ->where('company_id', $newCompanyId)
+                            ->pluck('department_id')
+                            ->toArray();
+
+                        if (count($validDepartments) !== count($departmentIds)) {
+                            throw_exception('部分部门不属于当前公司，无法关联');
+                        }
+
+                        // 创建部门关联记录
+                        $insertData = [];
+                        foreach ($validDepartments as $index => $departmentId) {
+                            $insertData[] = [
+                                'account_id'    => $accountId,
+                                'account_type'  => AccountTypeEnum::Admin->value,
+                                'department_id' => $departmentId,
+                                'sort'          => $index,
+                                'created_at'    => now(),
+                                'updated_at'    => now(),
+                            ];
+                        }
+
+                        if (!empty($insertData)) {
+                            AccountDepartment::query()->insert($insertData);
+                        }
+                    }
+                }
+            }
+
             DB::commit();
 
             // 记录审计日志
@@ -628,6 +767,11 @@ class Admin extends Model
 
         // 保存旧数据
         $old_data = $account->only(['id', 'username', 'account_type', 'status']);
+
+        // 删除账号的所有社交账号记录（释放手机号和邮箱供其他账号使用）
+        AccountSocial::query()
+            ->where('account_id', $accountId)
+            ->delete();
 
         // 删除账号（会级联删除管理员信息）
         $account->delete();
@@ -684,6 +828,11 @@ class Admin extends Model
                 ->first();
         }
 
+        // 获取账号所属部门列表
+        $departments = self::getAccountDepartments(['account_id' => $accountId]);
+
+        // 提取部门ID列表
+        $departmentIds = array_column($departments, 'department_id');
 
         // 处理社交账号信息
         $socialData = [];
@@ -702,7 +851,7 @@ class Admin extends Model
         }
 
         return [
-            'account' => [
+            'account'        => [
                 'id'                  => $account->id,
                 'username'            => $account->username,
                 'account_type'        => $account->account_type->value,
@@ -713,7 +862,7 @@ class Admin extends Model
                 'created_at'          => $account->created_at?->format('Y-m-d H:i:s'),
                 'updated_at'          => $account->updated_at?->format('Y-m-d H:i:s'),
             ],
-            'profile' => $profile ? [
+            'profile'        => $profile ? [
                 'id'                  => $profile->id,
                 'nickname'            => $profile->nickname,
                 'gender'              => $profile->gender,
@@ -725,7 +874,8 @@ class Admin extends Model
                 'created_at'          => $profile->created_at?->format('Y-m-d H:i:s'),
                 'updated_at'          => $profile->updated_at?->format('Y-m-d H:i:s'),
             ] : null,
-            'admin'   => $adminInfo ? [
+            'departments'    => $departments,
+            'admin'          => $adminInfo ? [
                 'account_id'   => $adminInfo->account_id,
                 'is_super'     => $adminInfo->is_super,
                 'company_id'   => $adminInfo->company_id,
@@ -733,7 +883,8 @@ class Admin extends Model
                 'created_at'   => $adminInfo->created_at?->format('Y-m-d H:i:s'),
                 'updated_at'   => $adminInfo->updated_at?->format('Y-m-d H:i:s'),
             ] : null,
-            'social'  => $socialData,
+            'department_ids' => $departmentIds,
+            'social'         => $socialData,
         ];
     }
 
@@ -780,7 +931,7 @@ class Admin extends Model
             // 删除这些账号在该公司部门下的所有关联记录
             $deletedDepartmentCount = 0;
             if (!empty($departmentIds)) {
-                $deletedDepartmentCount = DB::table('gpa_account_department')
+                $deletedDepartmentCount = AccountDepartment::query()
                     ->whereIn('account_id', $validAccountIds)
                     ->where('account_type', AccountTypeEnum::Admin->value)
                     ->whereIn('department_id', $departmentIds)
@@ -846,6 +997,154 @@ class Admin extends Model
             throw $e;
         }
     }
+
+    /**
+     * 获取账号所属部门列表
+     * @param array $params
+     * @return array
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    public static function getAccountDepartments(array $params): array
+    {
+        if (empty($params['account_id'])) {
+            throw_exception('缺少 account_id 参数');
+        }
+        $accountId = $params['account_id'];
+
+        // 验证账号是否存在且为管理员
+        $account = Account::query()->find($accountId);
+        if (!$account) {
+            throw_exception('账号不存在');
+        }
+        if ($account->account_type !== AccountTypeEnum::Admin) {
+            throw_exception('该账号不是管理员账号');
+        }
+
+        // 查询账号部门关联表
+        $accountDepartments = AccountDepartment::query()
+            ->where('account_id', $accountId)
+            ->where('account_type', AccountTypeEnum::Admin->value)
+            ->orderBy('sort', 'asc')
+            ->get();
+
+        if ($accountDepartments->isEmpty()) {
+            return [];
+        }
+
+        // 获取所有部门ID
+        $departmentIds = $accountDepartments->pluck('department_id')->toArray();
+
+        // 查询部门信息（包含 full_parent_id 用于构建层级路径）
+        $departments = Department::query()
+            ->whereIn('department_id', $departmentIds)
+            ->select(['department_id', 'department_name', 'department_code', 'company_id', 'full_parent_id'])
+            ->get()
+            ->keyBy('department_id');
+
+        // 获取公司信息
+        $companyIds = $departments->pluck('company_id')->filter()->unique()->toArray();
+        $companies = [];
+        if (!empty($companyIds)) {
+            $companies = Company::query()
+                ->whereIn('company_id', $companyIds)
+                ->pluck('company_name', 'company_id')
+                ->toArray();
+        }
+
+        // 组装返回数据
+        $result = [];
+        foreach ($accountDepartments as $accountDept) {
+            $department = $departments->get($accountDept->department_id);
+            if (!$department) {
+                continue; // 如果部门不存在，跳过
+            }
+
+            // 计算层级深度（通过 full_parent_id 中的ID数量判断）
+            $level = 0;
+            if (!empty($department->full_parent_id)) {
+                $parentIds = array_filter(
+                    array_map('intval', explode(',', trim($department->full_parent_id, ','))),
+                    function ($id) {
+                        return $id > 0;
+                    }
+                );
+                $level = count($parentIds);
+            }
+
+            // 构建部门层级路径（从高到低用 / 拼接）
+            $departmentPath = [];
+            if (!empty($department->full_parent_id)) {
+                // 解析 full_parent_id，获取所有父级部门ID（格式：,123,456,789,）
+                $parentIds = array_filter(
+                    array_map('intval', explode(',', trim($department->full_parent_id, ','))),
+                    function ($id) {
+                        return $id > 0;
+                    }
+                );
+                if (!empty($parentIds)) {
+                    // 查询所有父级部门，按 full_parent_id 中的顺序排列
+                    $parentDepartments = Department::query()
+                        ->whereIn('department_id', $parentIds)
+                        ->select(['department_id', 'department_name'])
+                        ->get()
+                        ->keyBy('department_id');
+
+                    // 按 full_parent_id 中的顺序添加父级部门名称
+                    foreach ($parentIds as $parentId) {
+                        if (isset($parentDepartments[$parentId])) {
+                            $departmentPath[] = $parentDepartments[$parentId]->department_name;
+                        }
+                    }
+                }
+            }
+            // 添加当前部门名称
+            $departmentPath[] = $department->department_name;
+            // 拼接成路径字符串
+            $departmentNamePath = implode('/', $departmentPath);
+
+            $result[] = [
+                'id'              => $accountDept->id,
+                'department_id'   => $accountDept->department_id,
+                'department_name' => $departmentNamePath,
+                'department_code' => $department->department_code,
+                'company_id'      => $department->company_id,
+                'company_name'    => $companies[$department->company_id] ?? '',
+                'sort'            => $accountDept->sort,
+                'level'           => $level, // 层级深度，用于排序
+                'full_parent_id'  => $department->full_parent_id ?? '', // 用于确保子部门在父部门后面
+            ];
+        }
+
+        // 对结果进行排序：先按层级排序（层级少的在前），同一层级内按 full_parent_id 路径和 sort 排序
+        usort($result, function ($a, $b) {
+            // 先按层级排序（层级少的在前，即父级在前）
+            if ($a['level'] != $b['level']) {
+                return $a['level'] <=> $b['level'];
+            }
+
+            // 同一层级内，先按 full_parent_id 路径排序（确保有相同父级的部门按路径顺序排列）
+            $aFullParentId = $a['full_parent_id'] ?? '';
+            $bFullParentId = $b['full_parent_id'] ?? '';
+
+            // 比较 full_parent_id 路径（字符串比较即可，因为ID是按层级顺序存储的）
+            if ($aFullParentId != $bFullParentId) {
+                return strcmp($aFullParentId, $bFullParentId);
+            }
+
+            // 如果路径相同（兄弟部门），按 sort 排序
+            return ($a['sort'] ?? 0) <=> ($b['sort'] ?? 0);
+        });
+
+        // 移除临时排序字段
+        foreach ($result as &$item) {
+            unset($item['level'], $item['full_parent_id']);
+        }
+        unset($item);
+
+        return $result;
+    }
+
 }
 
 

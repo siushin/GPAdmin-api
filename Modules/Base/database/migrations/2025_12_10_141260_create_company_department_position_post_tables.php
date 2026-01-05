@@ -62,7 +62,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('parent_id')->default(0)->comment('上级部门ID');
             $table->string('full_parent_id')->nullable()->comment('完整上级部门ID路径');
             $table->tinyInteger('status')->default(1)->comment('状态：1正常，0禁用');
-            $table->integer('sort_order')->default(0)->comment('排序');
+            $table->integer('sort')->default(0)->comment('排序');
             $table->timestamps();
             $table->softDeletes();
 

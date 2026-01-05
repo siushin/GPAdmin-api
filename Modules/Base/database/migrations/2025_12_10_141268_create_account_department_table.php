@@ -26,13 +26,8 @@ return new class extends Migration {
             $table->unsignedBigInteger('account_id')->comment('账号ID');
             $table->string('account_type', 20)->comment($accountTypeComment);
             $table->unsignedBigInteger('department_id')->comment('部门ID');
-            $table->tinyInteger('is_primary')->default(0)->comment('是否主部门：1是，0否');
-            $table->dateTime('start_date')->nullable()->comment('加入部门开始日期');
-            $table->dateTime('end_date')->nullable()->comment('离开部门结束日期（为空表示当前有效）');
-            $table->tinyInteger('status')->default(1)->comment('状态：1有效，0无效');
-            $table->integer('sort_order')->default(0)->comment('排序');
+            $table->integer('sort')->default(0)->comment('排序');
             $table->timestamps();
-            $table->softDeletes();
 
             // 关联账号表
             $table->foreign('account_id')
@@ -50,8 +45,6 @@ return new class extends Migration {
             $table->index('account_id');
             $table->index('account_type');
             $table->index('department_id');
-            $table->index('is_primary');
-            $table->index('status');
 
             // 同一账号不能重复关联同一部门
             $table->unique(['account_id', 'department_id'], 'unique_account_department');

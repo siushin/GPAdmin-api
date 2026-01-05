@@ -105,18 +105,27 @@ class Company extends Model
             throw_exception('统一社会信用代码必须为18位');
         }
 
-        // 如果提供了 company_code，检查唯一性
+        // 如果提供了 company_code，检查唯一性（排除软删除的记录）
         if (!empty($company_code)) {
-            $exist = self::query()->where('company_code', $company_code)->exists();
+            $exist = self::query()
+                ->where('company_code', $company_code)
+                ->whereNull('deleted_at') // 排除软删除的记录
+                ->exists();
             $exist && throw_exception('公司编码已存在');
         }
 
-        // 检查统一社会信用代码唯一性
-        $exist = self::query()->where('company_credit_code', $company_credit_code)->exists();
+        // 检查统一社会信用代码唯一性（排除软删除的记录）
+        $exist = self::query()
+            ->where('company_credit_code', $company_credit_code)
+            ->whereNull('deleted_at') // 排除软删除的记录
+            ->exists();
         $exist && throw_exception('统一社会信用代码已存在');
 
-        // 检查公司名称唯一性
-        $exist = self::query()->where('company_name', $company_name)->exists();
+        // 检查公司名称唯一性（排除软删除的记录）
+        $exist = self::query()
+            ->where('company_name', $company_name)
+            ->whereNull('deleted_at') // 排除软删除的记录
+            ->exists();
         $exist && throw_exception('公司名称已存在');
 
         // 过滤允许的字段
@@ -170,23 +179,25 @@ class Company extends Model
         !$info && throw_exception('找不到该数据，请刷新后重试');
         $old_data = $info->toArray();
 
-        // 检查公司名称唯一性，排除当前记录
+        // 检查公司名称唯一性，排除当前记录和软删除的记录
         $exist = self::query()
             ->where('company_name', $company_name)
             ->where('company_id', '<>', $company_id)
+            ->whereNull('deleted_at') // 排除软删除的记录
             ->exists();
         $exist && throw_exception('公司名称已存在，更新失败');
 
-        // 如果提供了 company_code，检查唯一性，排除当前记录
+        // 如果提供了 company_code，检查唯一性，排除当前记录和软删除的记录
         if (isset($params['company_code']) && !empty($params['company_code'])) {
             $exist = self::query()
                 ->where('company_code', $params['company_code'])
                 ->where('company_id', '<>', $company_id)
+                ->whereNull('deleted_at') // 排除软删除的记录
                 ->exists();
             $exist && throw_exception('公司编码已存在，更新失败');
         }
 
-        // 如果提供了 company_credit_code，检查唯一性和格式，排除当前记录
+        // 如果提供了 company_credit_code，检查唯一性和格式，排除当前记录和软删除的记录
         if (isset($params['company_credit_code']) && !empty($params['company_credit_code'])) {
             if (strlen($params['company_credit_code']) !== 18) {
                 throw_exception('统一社会信用代码必须为18位');
@@ -194,6 +205,7 @@ class Company extends Model
             $exist = self::query()
                 ->where('company_credit_code', $params['company_credit_code'])
                 ->where('company_id', '<>', $company_id)
+                ->whereNull('deleted_at') // 排除软删除的记录
                 ->exists();
             $exist && throw_exception('统一社会信用代码已存在，更新失败');
         }

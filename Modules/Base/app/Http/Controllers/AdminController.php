@@ -136,5 +136,18 @@ class AdminController extends Controller
         $params = request()->all();
         return success(Admin::batchRemoveFromCompany($params));
     }
+
+    /**
+     * 获取账号所属部门列表
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::list)]
+    public function getAccountDepartments(): JsonResponse
+    {
+        $params = trimParam(request()->only(['account_id']));
+        return success(Admin::getAccountDepartments($params));
+    }
 }
 

@@ -18,6 +18,13 @@ scope:
 
 ## 2. Eloquent ORM/数据库使用约束
 
+**禁止直接使用 DB 类操作数据库表**：必须为每个数据表创建对应的 Eloquent 模型，所有数据库操作必须通过模型进行。
+
+**使用 Eloquent ORM 进行数据库操作**：
+
+- 使用模型的 `query()` 方法构建查询
+- 使用模型的 `create()`、`update()`、`delete()` 方法进行数据操作
+
 **参数必填项校验**：必须使用 `self::checkEmptyParam($params, ['organization_type']);` 进行参数校验，需要 `use ParamTool`。
 
 **构造where数组**：必须使用
@@ -31,9 +38,9 @@ scope:
 - `'date_range'` 或 `'time_range'` - 日期/时间范围查询，需要指定字段名，例如：`'date_range' => 'created_at'` 或
   `'time_range' => 'created_at'`
 - `'keyword'` - 关键词查询，支持以下格式：
-    - 单个字段：`'keyword' => 'content'`
-    - 多个字段（用 `|` 分隔）：`'keyword' => 'content|ip_location'`
-    - 字段数组：`'keyword' => ['before_data', 'after_data', 'description']`
+  - 单个字段：`'keyword' => 'content'`
+  - 多个字段（用 `|` 分隔）：`'keyword' => 'content|ip_location'`
+  - 字段数组：`'keyword' => ['before_data', 'after_data', 'description']`
 
 ## 3. 主键ID生成规范
 
@@ -79,6 +86,7 @@ scope:
 - **适用范围**：所有更新操作中需要检查字段是否存在的场景
 
 **示例**：
+
 ```php
 // ❌ 错误：status 为 0 时无法更新
 if (isset($params['status'])) {
@@ -104,20 +112,21 @@ if (array_key_exists('status', $params)) {
 - **解决方案**：对于可能为 `0` 的关键字段（如 `status`、`sort_order` 等），在调用 `trimValueArray()` 之前先保存其值，如果被移除了则恢复
 
 **示例**：
+
 ```php
 // ✅ 正确：在 trimValueArray 之前保存 status 的值
 public static function updateDepartment(array $params): array
 {
     // 保存可能为 0 的关键字段值
     $statusValue = array_key_exists('status', $params) ? $params['status'] : null;
-    
+
     self::trimValueArray($params, [], [null]);
-    
+
     // 如果 status 被移除了，但原本存在，则恢复它
     if ($statusValue !== null && !array_key_exists('status', $params)) {
         $params['status'] = $statusValue;
     }
-    
+
     // ... 后续处理
 }
 ```

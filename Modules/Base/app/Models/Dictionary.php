@@ -136,7 +136,7 @@ class Dictionary extends Model
      * @param array $params
      * @param array $response_keys
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     public static function addDictionary(array $params = [], array $response_keys = []): array
@@ -144,7 +144,6 @@ class Dictionary extends Model
         $category_id = DictionaryCategory::checkCodeValidate($params);
         $params['category_id'] = $category_id;
 
-        self::trimValueArray($params, [], [null]);
         self::checkEmptyParam($params, ['category_code', 'dictionary_name']);
 
         $category_code = $params['category_code'];
@@ -214,12 +213,11 @@ class Dictionary extends Model
      * 更新数据字典
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     public static function updateDictionary(array $params = []): array
     {
-        self::trimValueArray($params, [], [null]);
         self::checkEmptyParam($params, ['dictionary_id', 'dictionary_name']);
 
         $dictionary_id = $params['dictionary_id'];
@@ -250,12 +248,17 @@ class Dictionary extends Model
             $update_data['dictionary_value'] = $params['dictionary_value'];
         }
 
-        // 支持更新其他字段
+        // 支持更新其他字段（使用 array_key_exists 允许空字符串和 null 值更新）
         $allowed_fields = ['dictionary_desc', 'sort'];
         foreach ($allowed_fields as $field) {
-            if (isset($params[$field])) {
+            if (array_key_exists($field, $params)) {
                 $update_data[$field] = $params[$field];
             }
+        }
+
+        // 处理不能为 null 的字段，设置默认值
+        if (array_key_exists('sort', $update_data) && ($update_data['sort'] === null || $update_data['sort'] === '')) {
+            $update_data['sort'] = 0;
         }
 
         // 检查唯一性约束1：同一分类下字典名称必须唯一（unique_dictionary_name），排除当前记录

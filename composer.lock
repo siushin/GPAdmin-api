@@ -3814,16 +3814,16 @@
         },
         {
             "name": "siushin/laravel-tool",
-            "version": "v1.0.23",
+            "version": "v1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/siushin/laravel-tool.git",
-                "reference": "33e074ca0601c696383ba272a31633675a5a1df2"
+                "reference": "5379efe68886bb4c844d403706c81f33f3b9dbf1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/siushin/laravel-tool/zipball/33e074ca0601c696383ba272a31633675a5a1df2",
-                "reference": "33e074ca0601c696383ba272a31633675a5a1df2",
+                "url": "https://api.github.com/repos/siushin/laravel-tool/zipball/5379efe68886bb4c844d403706c81f33f3b9dbf1",
+                "reference": "5379efe68886bb4c844d403706c81f33f3b9dbf1",
                 "shasum": ""
             },
             "require": {
@@ -3871,9 +3871,9 @@
             ],
             "support": {
                 "issues": "https://github.com/siushin/laravel-tool/issues",
-                "source": "https://github.com/siushin/laravel-tool/tree/v1.0.23"
+                "source": "https://github.com/siushin/laravel-tool/tree/v1.1.0"
             },
-            "time": "2026-01-03T11:44:55+00:00"
+            "time": "2026-01-05T15:42:54+00:00"
         },
         {
             "name": "siushin/util",

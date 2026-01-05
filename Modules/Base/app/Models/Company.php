@@ -90,7 +90,6 @@ class Company extends Model
      */
     public static function addCompany(array $params): array
     {
-        self::trimValueArray($params, [], [null]);
         self::checkEmptyParam($params, ['company_name']);
 
         $company_name = $params['company_name'];
@@ -164,12 +163,11 @@ class Company extends Model
      * 更新公司
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface|Exception
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     public static function updateCompany(array $params): array
     {
-        self::trimValueArray($params, [], [null]);
         self::checkEmptyParam($params, ['company_id', 'company_name']);
 
         $company_id = $params['company_id'];

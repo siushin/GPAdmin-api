@@ -118,18 +118,18 @@ class Menu extends Model
         foreach ($menus as $menu) {
             if ($menu['parent_id'] == $parentId) {
                 $menuItem = [
-                    'menu_id'     => $menu['menu_id'],
-                    'menu_name'   => $menu['menu_name'],
-                    'menu_key'    => $menu['menu_key'],
-                    'menu_path'   => $menu['menu_path'],
-                    'menu_icon'   => $menu['menu_icon'],
-                    'menu_type'   => $menu['menu_type'],
-                    'parent_id'   => $menu['parent_id'],
-                    'component'   => $menu['component'],
-                    'redirect'    => $menu['redirect'],
-                    'is_required' => $menu['is_required'],
-                    'status'      => $menu['status'],
-                    'sort'        => $menu['sort'],
+                    'menu_id'      => $menu['menu_id'],
+                    'menu_name'    => $menu['menu_name'],
+                    'menu_key'     => $menu['menu_key'],
+                    'menu_path'    => $menu['menu_path'],
+                    'menu_icon'    => $menu['menu_icon'],
+                    'menu_type'    => $menu['menu_type'],
+                    'parent_id'    => $menu['parent_id'],
+                    'component'    => $menu['component'],
+                    'redirect'     => $menu['redirect'],
+                    'is_required'  => $menu['is_required'],
+                    'status'       => $menu['status'],
+                    'sort'         => $menu['sort'],
                     'account_type' => $menu['account_type'],
                 ];
 
@@ -150,12 +150,11 @@ class Menu extends Model
      * 新增菜单
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     public static function addMenu(array $params): array
     {
-        self::trimValueArray($params, [], [null]);
         self::checkEmptyParam($params, ['menu_name', 'menu_type', 'account_type']);
 
         $menu_name = $params['menu_name'];
@@ -228,12 +227,11 @@ class Menu extends Model
      * 编辑菜单
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     public static function updateMenu(array $params): array
     {
-        self::trimValueArray($params, [], [null]);
         self::checkEmptyParam($params, ['menu_id', 'menu_name', 'menu_type']);
 
         $menu_id = $params['menu_id'];
@@ -278,15 +276,29 @@ class Menu extends Model
         // 构建更新数据
         $update_data = ['menu_name' => $menu_name, 'menu_type' => $menu_type];
 
-        // 支持更新其他字段
+        // 支持更新其他字段（使用 array_key_exists 允许空字符串和 null 值更新）
         $allowed_fields = [
             'account_type', 'menu_key', 'menu_path', 'menu_icon',
             'parent_id', 'component', 'redirect', 'is_required', 'status', 'sort'
         ];
         foreach ($allowed_fields as $field) {
-            if (isset($params[$field])) {
+            if (array_key_exists($field, $params)) {
                 $update_data[$field] = $params[$field];
             }
+        }
+
+        // 处理不能为 null 的字段，设置默认值
+        if (array_key_exists('sort', $update_data) && ($update_data['sort'] === null || $update_data['sort'] === '')) {
+            $update_data['sort'] = 0;
+        }
+        if (array_key_exists('status', $update_data) && ($update_data['status'] === null || $update_data['status'] === '')) {
+            $update_data['status'] = 1;
+        }
+        if (array_key_exists('parent_id', $update_data) && ($update_data['parent_id'] === null || $update_data['parent_id'] === '')) {
+            $update_data['parent_id'] = 0;
+        }
+        if (array_key_exists('is_required', $update_data) && ($update_data['is_required'] === null || $update_data['is_required'] === '')) {
+            $update_data['is_required'] = 0;
         }
 
         // 如果 menu_path 发生变化，检查唯一性约束

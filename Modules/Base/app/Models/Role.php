@@ -93,12 +93,11 @@ class Role extends Model
      * 新增角色
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     public static function addRole(array $params): array
     {
-        self::trimValueArray($params, [], [null]);
         self::checkEmptyParam($params, ['role_name', 'role_code', 'account_type']);
 
         $role_name = $params['role_name'];
@@ -152,12 +151,11 @@ class Role extends Model
      * 更新角色
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     public static function updateRole(array $params): array
     {
-        self::trimValueArray($params, [], [null]);
         self::checkEmptyParam($params, ['role_id', 'role_name', 'role_code']);
 
         $role_id = $params['role_id'];
@@ -181,12 +179,20 @@ class Role extends Model
         // 构建更新数据
         $update_data = ['role_name' => $role_name, 'role_code' => $role_code];
 
-        // 支持更新其他字段
+        // 支持更新其他字段（使用 array_key_exists 允许空字符串和 null 值更新）
         $allowed_fields = ['account_type', 'description', 'status', 'sort'];
         foreach ($allowed_fields as $field) {
-            if (isset($params[$field])) {
+            if (array_key_exists($field, $params)) {
                 $update_data[$field] = $params[$field];
             }
+        }
+
+        // 处理不能为 null 的字段，设置默认值
+        if (array_key_exists('sort', $update_data) && ($update_data['sort'] === null || $update_data['sort'] === '')) {
+            $update_data['sort'] = 0;
+        }
+        if (array_key_exists('status', $update_data) && ($update_data['status'] === null || $update_data['status'] === '')) {
+            $update_data['status'] = 1;
         }
 
         // 确定用于检查唯一性的 account_type 和 role_code
@@ -228,7 +234,7 @@ class Role extends Model
      * 删除角色
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     public static function deleteRole(array $params): array

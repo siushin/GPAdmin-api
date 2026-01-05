@@ -132,11 +132,11 @@ class Announcement extends Model
         }
 
         return self::fastGetPageData($query, $params, [
-            'title'           => 'like',
-            'status'          => '=',
-            'position'        => 'like',
-            'date_range'      => 'created_at',
-            'time_range'      => 'created_at',
+            'title'      => 'like',
+            'status'     => '=',
+            'position'   => 'like',
+            'date_range' => 'created_at',
+            'time_range' => 'created_at',
         ]);
     }
 
@@ -144,12 +144,11 @@ class Announcement extends Model
      * 新增公告
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     public static function addAnnouncement(array $params): array
     {
-        self::trimValueArray($params, [], [null]);
         self::checkEmptyParam($params, ['title', 'content']);
 
         $title = $params['title'];
@@ -192,12 +191,11 @@ class Announcement extends Model
      * 更新公告
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     public static function updateAnnouncement(array $params): array
     {
-        self::trimValueArray($params, [], [null]);
         self::checkEmptyParam($params, ['id', 'title']);
 
         $id = $params['id'];
@@ -210,14 +208,19 @@ class Announcement extends Model
         // 构建更新数据
         $update_data = ['title' => $title];
 
-        // 支持更新其他字段
+        // 支持更新其他字段（使用 array_key_exists 允许空字符串和 null 值更新）
         $allowed_fields = [
             'content', 'target_platform', 'position', 'start_time', 'end_time', 'status'
         ];
         foreach ($allowed_fields as $field) {
-            if (isset($params[$field])) {
+            if (array_key_exists($field, $params)) {
                 $update_data[$field] = $params[$field];
             }
+        }
+
+        // 处理不能为 null 的字段，设置默认值
+        if (array_key_exists('status', $update_data) && ($update_data['status'] === null || $update_data['status'] === '')) {
+            $update_data['status'] = 1;
         }
 
         $bool = $info->update($update_data);

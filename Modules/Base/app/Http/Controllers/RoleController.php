@@ -6,8 +6,6 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Role;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
 use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
 
@@ -43,7 +41,7 @@ class RoleController extends Controller
     /**
      * 添加角色
      * @return JsonResponse
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     #[OperationAction(OperationActionEnum::add)]
@@ -56,7 +54,7 @@ class RoleController extends Controller
     /**
      * 更新角色
      * @return JsonResponse
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     #[OperationAction(OperationActionEnum::update)]
@@ -69,7 +67,7 @@ class RoleController extends Controller
     /**
      * 删除角色
      * @return JsonResponse
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     #[OperationAction(OperationActionEnum::delete)]

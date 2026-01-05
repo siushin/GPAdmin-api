@@ -81,12 +81,11 @@ class Message extends Model
      * 新增站内信
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     public static function addMessage(array $params): array
     {
-        self::trimValueArray($params, [], [null]);
         self::checkEmptyParam($params, ['title', 'content', 'receiver_id']);
 
         $title = $params['title'];
@@ -129,12 +128,11 @@ class Message extends Model
      * 更新站内信
      * @param array $params
      * @return array
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     public static function updateMessage(array $params): array
     {
-        self::trimValueArray($params, [], [null]);
         self::checkEmptyParam($params, ['id', 'title']);
 
         $id = $params['id'];
@@ -147,14 +145,19 @@ class Message extends Model
         // 构建更新数据
         $update_data = ['title' => $title];
 
-        // 支持更新其他字段
+        // 支持更新其他字段（使用 array_key_exists 允许空字符串和 null 值更新）
         $allowed_fields = [
             'content', 'target_platform', 'status'
         ];
         foreach ($allowed_fields as $field) {
-            if (isset($params[$field])) {
+            if (array_key_exists($field, $params)) {
                 $update_data[$field] = $params[$field];
             }
+        }
+
+        // 处理不能为 null 的字段，设置默认值
+        if (array_key_exists('status', $update_data) && ($update_data['status'] === null || $update_data['status'] === '')) {
+            $update_data['status'] = 0;
         }
 
         $bool = $info->update($update_data);

@@ -19,8 +19,8 @@ org,公司管理,org.company,/company/company,BankOutlined,menu,./Company/Compan
 org,部门管理,org.dept,/company/department,PartitionOutlined,menu,./Company/Department,,0,1
 ,,,,,,,,,,
 ,菜单管理,menu,/menu,BlockOutlined,menu,,/menu/role,0,1
-menu,角色管理,menu.role,/menu/role,ProfileOutlined,menu,./Menu/Role,,0,1
 menu,菜单管理,menu.menu,/menu/menu,BlockOutlined,menu,./Menu/Menu,,0,1
+menu,角色管理,menu.role,/menu/role,ProfileOutlined,menu,./Menu/Role,,0,1
 ,,,,,,,,,,
 ,系统管理,system,/system,SettingOutlined,menu,,/system/admin,0,1
 system,管理员列表,system.admin,/system/admin,UserOutlined,menu,./System/Admin,,0,1

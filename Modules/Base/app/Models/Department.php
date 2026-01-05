@@ -201,7 +201,6 @@ class Department extends Model
      */
     public static function addDepartment(array $params): array
     {
-        self::trimValueArray($params, [], [null]);
         self::checkEmptyParam($params, ['department_name']);
 
         $department_name = $params['department_name'];

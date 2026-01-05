@@ -40,7 +40,7 @@ class FileController extends Controller
     #[OperationAction(OperationActionEnum::delete)]
     public function delete(Request $request): JsonResponse
     {
-        $params = trimParam($request->all());
+        $params = $request->all();
         return success(File::deleteFile($params), '删除文件成功');
     }
 

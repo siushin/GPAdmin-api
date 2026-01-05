@@ -23,7 +23,7 @@ class RoleController extends Controller
     #[OperationAction(OperationActionEnum::list)]
     public function list(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Role::getAllData($params));
     }
 
@@ -36,7 +36,7 @@ class RoleController extends Controller
     #[OperationAction(OperationActionEnum::index)]
     public function index(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Role::getPageData($params));
     }
 
@@ -49,7 +49,7 @@ class RoleController extends Controller
     #[OperationAction(OperationActionEnum::add)]
     public function add(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Role::addRole($params));
     }
 
@@ -62,7 +62,7 @@ class RoleController extends Controller
     #[OperationAction(OperationActionEnum::update)]
     public function update(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Role::updateRole($params));
     }
 
@@ -75,7 +75,7 @@ class RoleController extends Controller
     #[OperationAction(OperationActionEnum::delete)]
     public function delete(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Role::deleteRole($params));
     }
 }

@@ -55,8 +55,8 @@ return new class extends Migration {
         Schema::create('gpa_department', function (Blueprint $table) {
             $table->id('department_id')->comment('部门ID');
             $table->unsignedBigInteger('company_id')->nullable()->comment('所属公司ID');
-            $table->string('department_code')->nullable()->comment('部门编码');
             $table->string('department_name')->comment('部门名称');
+            $table->string('department_code')->nullable()->comment('部门编码');
             $table->string('manager_id')->nullable()->comment('部门负责人ID');
             $table->text('description')->nullable()->comment('部门描述');
             $table->unsignedBigInteger('parent_id')->default(0)->comment('上级部门ID');

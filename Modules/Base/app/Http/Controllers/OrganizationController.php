@@ -50,7 +50,7 @@ class OrganizationController extends Controller
     #[OperationAction(OperationActionEnum::add)]
     public function addOrganizationType(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         $params['category_id'] = DictionaryCategory::checkCodeValidate(['category_code' => 'OrganizationType']);
         self::checkEmptyParam($params, ['dictionary_name', 'dictionary_value', 'dictionary_desc']);
 
@@ -94,7 +94,7 @@ class OrganizationController extends Controller
     #[OperationAction(OperationActionEnum::update)]
     public function updateOrganizationType(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         self::checkEmptyParam($params, ['dictionary_id', 'dictionary_name', 'dictionary_value', 'dictionary_desc']);
 
         $dictionary_id = $params['dictionary_id'];
@@ -150,7 +150,7 @@ class OrganizationController extends Controller
     #[OperationAction(OperationActionEnum::delete)]
     public function deleteOrganizationType(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         self::checkEmptyParam($params, ['dictionary_id']);
 
         $dictionary_id = $params['dictionary_id'];
@@ -202,7 +202,7 @@ class OrganizationController extends Controller
     #[OperationAction(OperationActionEnum::list)]
     public function getFullTreeDataForHtml(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
 
         // 获取树形数据
         $treeData = Organization::getTreeData($params);
@@ -236,7 +236,7 @@ class OrganizationController extends Controller
     #[OperationAction(OperationActionEnum::index)]
     public function index(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Organization::getTreeData($params));
     }
 
@@ -249,7 +249,7 @@ class OrganizationController extends Controller
     #[OperationAction(OperationActionEnum::add)]
     public function add(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Organization::addOrganization($params));
     }
 
@@ -288,7 +288,7 @@ class OrganizationController extends Controller
     #[OperationAction(OperationActionEnum::move)]
     public function move(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Organization::moveOrganization($params));
     }
 }

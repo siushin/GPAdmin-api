@@ -69,7 +69,60 @@ scope:
 - **适用范围**：所有使用封装的分页/列表查询方法的场景
 - **目的**：确保普通用户只能查看自己的数据，管理员可以按账号ID筛选数据
 
-## 4. 重要提醒
+## 4. 字段更新检查规范
+
+**重要**：在更新数据时，检查字段是否存在必须使用 `array_key_exists()` 而不是 `isset()`。
+
+- **禁止**：使用 `isset($params[$field])` 或 `if ($params[$field])` 来检查字段是否存在
+- **必须**：使用 `array_key_exists($field, $params)` 来检查字段是否存在
+- **原因**：`isset()` 对于值为 `null` 的情况会返回 `false`，而 `if ($params[$field])` 对于值为 `0`、`false`、`''` 等 falsy 值也会返回 `false`，导致这些值无法正确更新
+- **适用范围**：所有更新操作中需要检查字段是否存在的场景
+
+**示例**：
+```php
+// ❌ 错误：status 为 0 时无法更新
+if (isset($params['status'])) {
+    $update_data['status'] = $params['status'];
+}
+
+// ❌ 错误：status 为 0 时无法更新
+if ($params['status']) {
+    $update_data['status'] = $params['status'];
+}
+
+// ✅ 正确：status 为 0 时也能正确更新
+if (array_key_exists('status', $params)) {
+    $update_data['status'] = $params['status'];
+}
+```
+
+### 4.1 trimValueArray 处理规范
+
+**重要**：如果更新方法中使用了 `trimValueArray()`，必须特别注意值为 `0`、`false` 等 falsy 值的字段。
+
+- **问题**：`trimValueArray()` 可能会移除某些值（取决于 `$values` 参数），如果字段值为 `0` 且不在 `$values` 列表中，通常不会被移除，但为了安全起见，建议在 `trimValueArray()` 之前保存这些关键字段的值
+- **解决方案**：对于可能为 `0` 的关键字段（如 `status`、`sort_order` 等），在调用 `trimValueArray()` 之前先保存其值，如果被移除了则恢复
+
+**示例**：
+```php
+// ✅ 正确：在 trimValueArray 之前保存 status 的值
+public static function updateDepartment(array $params): array
+{
+    // 保存可能为 0 的关键字段值
+    $statusValue = array_key_exists('status', $params) ? $params['status'] : null;
+    
+    self::trimValueArray($params, [], [null]);
+    
+    // 如果 status 被移除了，但原本存在，则恢复它
+    if ($statusValue !== null && !array_key_exists('status', $params)) {
+        $params['status'] = $statusValue;
+    }
+    
+    // ... 后续处理
+}
+```
+
+## 5. 重要提醒
 
 - **所有主键ID字段**，在创建记录时都必须使用 `generateId()` 函数
 - 不要依赖数据库的 AUTO_INCREMENT 功能
@@ -79,3 +132,4 @@ scope:
 - 不要手动编写数据对比逻辑，应使用 `compareDbDataDiff()` 自动计算新增、更新、删除的差异
 - **所有分页/列表查询方法**，都必须支持 `account_id` 的完全匹配查询（`'account_id' => '='`）
 - 确保普通用户只能查看自己的数据，管理员可以按账号ID筛选数据
+- **所有更新操作**，检查字段是否存在时必须使用 `array_key_exists()` 而不是 `isset()` 或 `if ($value)`

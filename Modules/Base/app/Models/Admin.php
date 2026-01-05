@@ -174,6 +174,128 @@ class Admin extends Model
     }
 
     /**
+     * 获取管理员列表（全部）
+     * @param array $params
+     * @return array
+     * @author siushin<siushin@163.com>
+     */
+    public static function getAllData(array $params = []): array
+    {
+        $query = Account::query()
+            ->where('account_type', AccountTypeEnum::Admin->value)
+            ->with(['adminInfo', 'profile', 'socialAccounts'])
+            ->when(isset($params['status']), function ($q) use ($params) {
+                if (is_array($params['status'])) {
+                    $q->whereIn('status', $params['status']);
+                } else {
+                    $q->where('status', $params['status']);
+                }
+            })
+            ->when(!empty($params['keyword']), function ($q) use ($params) {
+                $q->where(function ($query) use ($params) {
+                    $query->where('username', 'like', "%{$params['keyword']}%")
+                        ->orWhere('last_login_ip', 'like', "%{$params['keyword']}%")
+                        ->orWhereHas('profile', function ($q) use ($params) {
+                            $q->where('nickname', 'like', "%{$params['keyword']}%");
+                        })
+                        ->orWhereHas('socialAccounts', function ($q) use ($params) {
+                            $q->where(function ($subQuery) use ($params) {
+                                $subQuery->where('social_type', SocialTypeEnum::Phone->value)
+                                    ->where('social_account', 'like', "%{$params['keyword']}%");
+                            })->orWhere(function ($subQuery) use ($params) {
+                                $subQuery->where('social_type', SocialTypeEnum::Email->value)
+                                    ->where('social_account', 'like', "%{$params['keyword']}%");
+                            });
+                        });
+                });
+            })
+            ->when(!empty($params['last_login_time']), function ($q) use ($params) {
+                if (is_array($params['last_login_time']) && count($params['last_login_time']) === 2) {
+                    $startTime = $params['last_login_time'][0];
+                    $endTime = $params['last_login_time'][1];
+                    if (strlen($endTime) <= 10 || !str_contains($endTime, ' ')) {
+                        $endTime = $endTime . ' 23:59:59';
+                    }
+                    $q->whereBetween('last_login_time', [$startTime, $endTime]);
+                }
+            })
+            ->when(!empty($params['created_at']), function ($q) use ($params) {
+                if (is_array($params['created_at']) && count($params['created_at']) === 2) {
+                    $startTime = $params['created_at'][0];
+                    $endTime = $params['created_at'][1];
+                    if (strlen($endTime) <= 10 || !str_contains($endTime, ' ')) {
+                        $endTime = $endTime . ' 23:59:59';
+                    }
+                    $q->whereBetween('created_at', [$startTime, $endTime]);
+                }
+            });
+
+        // 如果有is_super筛选
+        if (isset($params['is_super']) && $params['is_super'] !== '') {
+            $query->whereHas('adminInfo', function ($q) use ($params) {
+                $q->where('is_super', $params['is_super']);
+            });
+        }
+
+        // 如果有company_id筛选
+        if (isset($params['company_id']) && $params['company_id'] !== '') {
+            $query->whereHas('adminInfo', function ($q) use ($params) {
+                $q->where('company_id', $params['company_id']);
+            });
+        }
+
+        $list = $query->orderBy('id', 'desc')
+            ->get()
+            ->map(function ($account) {
+                $adminInfo = $account->adminInfo;
+                $profile = $account->profile;
+                $socialAccounts = $account->socialAccounts;
+
+                // 获取手机号
+                $phone = $socialAccounts->firstWhere('social_type', SocialTypeEnum::Phone->value)?->social_account;
+                // 获取邮箱
+                $email = $socialAccounts->firstWhere('social_type', SocialTypeEnum::Email->value)?->social_account;
+
+                return [
+                    'account_id'          => $account->id,
+                    'username'            => $account->username,
+                    'nickname'            => $profile?->nickname,
+                    'name'                => $profile?->nickname,
+                    'account'             => $account->username,
+                    'phone'               => $phone,
+                    'email'               => $email,
+                    'account_type'        => $account->account_type->value,
+                    'status'              => $account->status,
+                    'is_super'            => $adminInfo?->is_super ?? 0,
+                    'company_id'          => $adminInfo?->company_id,
+                    'last_login_ip'       => $account->last_login_ip,
+                    'last_login_location' => getIpLocation($account->last_login_ip),
+                    'last_login_time'     => $account->last_login_time?->format('Y-m-d H:i:s'),
+                    'created_at'          => $account->created_at?->format('Y-m-d H:i:s'),
+                    'updated_at'          => $account->updated_at?->format('Y-m-d H:i:s'),
+                ];
+            })
+            ->toArray();
+
+        // 批量查询公司名
+        $companyIds = array_filter(array_unique(array_column($list, 'company_id')));
+        $companies = [];
+        if (!empty($companyIds)) {
+            $companies = Company::query()
+                ->whereIn('company_id', $companyIds)
+                ->pluck('company_name', 'company_id')
+                ->toArray();
+        }
+
+        // 遍历数据赋值公司名
+        foreach ($list as &$item) {
+            $item['company_name'] = $companies[$item['company_id']] ?? '';
+        }
+
+        return $list;
+    }
+
+    /**
      * 新增管理员
      * @param array $params
      * @return array

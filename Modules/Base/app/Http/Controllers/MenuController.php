@@ -128,7 +128,7 @@ class MenuController extends Controller
     #[OperationAction(OperationActionEnum::index)]
     public function index(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Menu::getPageData($params));
     }
 
@@ -141,7 +141,7 @@ class MenuController extends Controller
     #[OperationAction(OperationActionEnum::add)]
     public function add(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Menu::addMenu($params));
     }
 
@@ -154,7 +154,7 @@ class MenuController extends Controller
     #[OperationAction(OperationActionEnum::update)]
     public function update(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Menu::updateMenu($params));
     }
 
@@ -167,7 +167,7 @@ class MenuController extends Controller
     #[OperationAction(OperationActionEnum::delete)]
     public function delete(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Menu::deleteMenu($params));
     }
 
@@ -179,7 +179,7 @@ class MenuController extends Controller
      */
     public function tree(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Menu::getTreeData($params));
     }
 }

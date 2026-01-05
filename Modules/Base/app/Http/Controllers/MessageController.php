@@ -23,7 +23,7 @@ class MessageController extends Controller
     #[OperationAction(OperationActionEnum::index)]
     public function index(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Message::getPageData($params));
     }
 
@@ -37,7 +37,7 @@ class MessageController extends Controller
     #[OperationAction(OperationActionEnum::add)]
     public function add(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Message::addMessage($params));
     }
 
@@ -51,7 +51,7 @@ class MessageController extends Controller
     #[OperationAction(OperationActionEnum::update)]
     public function update(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Message::updateMessage($params));
     }
 

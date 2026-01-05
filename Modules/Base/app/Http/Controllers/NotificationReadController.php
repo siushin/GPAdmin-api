@@ -21,7 +21,7 @@ class NotificationReadController extends Controller
     #[OperationAction(OperationActionEnum::index)]
     public function index(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(NotificationRead::getPageData($params));
     }
 }

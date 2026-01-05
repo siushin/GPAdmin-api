@@ -41,6 +41,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
     // 管理员列表
     Route::post('/admin/index', [AdminController::class, 'index']);
+    Route::post('/admin/list', [AdminController::class, 'list']);
     Route::post('/admin/add', [AdminController::class, 'add']);
     Route::post('/admin/update', [AdminController::class, 'update']);
     Route::post('/admin/delete', [AdminController::class, 'delete']);
@@ -73,10 +74,10 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
     Route::post('/company/delete', [CompanyController::class, 'delete']);
     // 部门管理
     Route::post('/department/list', [DepartmentController::class, 'list']);
-    Route::post('/department/index', [DepartmentController::class, 'index']);
     Route::post('/department/add', [DepartmentController::class, 'add']);
     Route::post('/department/update', [DepartmentController::class, 'update']);
     Route::post('/department/delete', [DepartmentController::class, 'delete']);
+    Route::post('/department/getTreeDataForHtml', [DepartmentController::class, 'getTreeDataForHtml']);
 
     // 菜单管理
     // 角色管理

@@ -20,6 +20,18 @@ class AdminController extends Controller
     use ParamTool;
 
     /**
+     * 管理员列表（全部）
+     * @return JsonResponse
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::list)]
+    public function list(): JsonResponse
+    {
+        $params = request()->all();
+        return success(Admin::getAllData($params));
+    }
+
+    /**
      * 管理员列表
      * @return JsonResponse
      * @author siushin<siushin@163.com>
@@ -27,7 +39,7 @@ class AdminController extends Controller
     #[OperationAction(OperationActionEnum::index)]
     public function index(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Admin::getPageData($params));
     }
 
@@ -40,7 +52,7 @@ class AdminController extends Controller
     #[OperationAction(OperationActionEnum::add)]
     public function add(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Admin::addAdmin($params));
     }
 
@@ -53,7 +65,7 @@ class AdminController extends Controller
     #[OperationAction(OperationActionEnum::update)]
     public function update(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Admin::updateAdmin($params));
     }
 
@@ -92,7 +104,7 @@ class AdminController extends Controller
     #[OperationAction(OperationActionEnum::list)]
     public function getLogs(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         $logType = $params['log_type'] ?? 'general'; // general, operation, audit, login
 
         // 必须提供 account_id
@@ -121,7 +133,7 @@ class AdminController extends Controller
     #[OperationAction(OperationActionEnum::batchDelete)]
     public function batchRemoveFromCompany(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(Admin::batchRemoveFromCompany($params));
     }
 }

@@ -28,7 +28,7 @@ class UserController extends Controller
     #[OperationAction(OperationActionEnum::index)]
     public function index(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(User::getPageData($params));
     }
 
@@ -41,7 +41,7 @@ class UserController extends Controller
     #[OperationAction(OperationActionEnum::add)]
     public function add(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(User::addUser($params));
     }
 
@@ -54,7 +54,7 @@ class UserController extends Controller
     #[OperationAction(OperationActionEnum::update)]
     public function update(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(User::updateUser($params));
     }
 
@@ -93,7 +93,7 @@ class UserController extends Controller
     #[OperationAction(OperationActionEnum::list)]
     public function getLogs(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         $logType = $params['log_type'] ?? 'general'; // general, operation, audit, login
 
         // 必须提供 account_id
@@ -122,7 +122,7 @@ class UserController extends Controller
     #[OperationAction(OperationActionEnum::update)]
     public function audit(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(User::auditUser($params));
     }
 
@@ -135,7 +135,7 @@ class UserController extends Controller
     #[OperationAction(OperationActionEnum::batchUpdate)]
     public function batchAudit(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(User::batchAuditUser($params));
     }
 
@@ -148,7 +148,7 @@ class UserController extends Controller
     #[OperationAction(OperationActionEnum::batchDelete)]
     public function batchDelete(): JsonResponse
     {
-        $params = trimParam(request()->all());
+        $params = request()->all();
         return success(User::batchDeleteUser($params));
     }
 }

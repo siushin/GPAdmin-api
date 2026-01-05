@@ -31,7 +31,7 @@ class DictionaryController extends Controller
     #[OperationAction(OperationActionEnum::list)]
     public function list(Request $request, array $fields = []): JsonResponse
     {
-        $params = trimParam($request->all());
+        $params = $request->all();
         return success(Dictionary::getAllData($params, $fields));
     }
 
@@ -45,7 +45,7 @@ class DictionaryController extends Controller
     #[OperationAction(OperationActionEnum::index)]
     public function index(Request $request): JsonResponse
     {
-        $params = trimParam($request->all());
+        $params = $request->all();
         return success(Dictionary::getPageData($params));
     }
 
@@ -59,7 +59,7 @@ class DictionaryController extends Controller
     #[OperationAction(OperationActionEnum::add)]
     public function add(Request $request): JsonResponse
     {
-        $params = trimParam($request->all());
+        $params = $request->all();
         return success(Dictionary::addDictionary($params));
     }
 
@@ -73,7 +73,7 @@ class DictionaryController extends Controller
     #[OperationAction(OperationActionEnum::update)]
     public function update(Request $request): JsonResponse
     {
-        $params = trimParam($request->all());
+        $params = $request->all();
         return success(Dictionary::updateDictionary($params));
     }
 
@@ -87,7 +87,7 @@ class DictionaryController extends Controller
     #[OperationAction(OperationActionEnum::delete)]
     public function delete(Request $request): JsonResponse
     {
-        $params = trimParam($request->all());
+        $params = $request->all();
         return success(Dictionary::deleteDictionary($params));
     }
 
@@ -101,7 +101,7 @@ class DictionaryController extends Controller
     #[OperationAction(OperationActionEnum::batchDelete)]
     public function batchDelete(Request $request): JsonResponse
     {
-        $params = trimParam($request->all());
+        $params = $request->all();
         return success(Dictionary::batchDeleteDictionary($params));
     }
 
@@ -115,7 +115,7 @@ class DictionaryController extends Controller
     #[OperationAction(OperationActionEnum::download)]
     public function getTplFile(Request $request): BinaryFileResponse
     {
-        $params = trimParam($request->all());
+        $params = $request->all();
         [$category_name, $tpl_path] = DictionaryCategory::getDictionaryTempFilePath($params);
         return response()->download($tpl_path, "{$category_name}_模板文件.xlsx");
     }
@@ -130,7 +130,7 @@ class DictionaryController extends Controller
     #[OperationAction(OperationActionEnum::paramData)]
     public function getPidData(Request $request): JsonResponse
     {
-        $params = trimParam($request->all());
+        $params = $request->all();
         $category_id = DictionaryCategory::checkCodeValidate($params);
         $parent_ids = Dictionary::query()->where(compact('category_id'))->distinct()->pluck('parent_id');
         $list = Dictionary::query()->whereIn('category_id', $parent_ids)->pluck('dictionary_name', 'dictionary_id')->toArray();

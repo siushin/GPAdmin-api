@@ -33,7 +33,7 @@ class LogController extends Controller
     #[OperationAction(OperationActionEnum::index)]
     public function generalLog(Request $request): JsonResponse
     {
-        $params = trimParam($request->all());
+        $params = $request->all();
         return success(GeneralLog::getPageData($params));
     }
 
@@ -47,7 +47,7 @@ class LogController extends Controller
     #[OperationAction(OperationActionEnum::index)]
     public function operationLog(Request $request): JsonResponse
     {
-        $params = trimParam($request->all());
+        $params = $request->all();
         return success(OperationLog::getPageData($params));
     }
 
@@ -61,7 +61,7 @@ class LogController extends Controller
     #[OperationAction(OperationActionEnum::index)]
     public function auditLog(Request $request): JsonResponse
     {
-        $params = trimParam($request->all());
+        $params = $request->all();
         return success(AuditLog::getPageData($params));
     }
 
@@ -75,7 +75,7 @@ class LogController extends Controller
     #[OperationAction(OperationActionEnum::index)]
     public function loginLog(Request $request): JsonResponse
     {
-        $params = trimParam($request->all());
+        $params = $request->all();
         return success(LoginLog::getPageData($params));
     }
 

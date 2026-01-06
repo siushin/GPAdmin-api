@@ -41,8 +41,6 @@ class Menu extends Model
     ];
 
     protected $hidden = [
-        'created_at',
-        'updated_at',
         'deleted_at',
     ];
 
@@ -64,13 +62,13 @@ class Menu extends Model
 
         return self::fastGetPageData(self::query(), $params, [
             'account_type' => '=',
+            'parent_id'    => '=',
             'menu_name'    => 'like',
             'menu_key'     => 'like',
             'menu_path'    => 'like',
             'menu_type'    => '=',
             'status'       => '=',
             'date_range'   => 'created_at',
-            'time_range'   => 'created_at',
         ]);
     }
 
@@ -242,16 +240,8 @@ class Menu extends Model
         !$info && throw_exception('找不到该数据，请刷新后重试');
         $old_data = $info->toArray();
 
+        // 编辑时使用原有的 account_type，不允许修改
         $account_type = $info->account_type;
-
-        // 如果传了 account_type，需要验证是否为有效枚举值
-        if (isset($params['account_type'])) {
-            $allow_account_types = array_column(AccountTypeEnum::cases(), 'value');
-            if (!in_array($params['account_type'], $allow_account_types)) {
-                throw_exception('账号类型无效');
-            }
-            $account_type = $params['account_type'];
-        }
 
         $parent_id = $params['parent_id'] ?? $info->parent_id;
 
@@ -277,8 +267,9 @@ class Menu extends Model
         $update_data = ['menu_name' => $menu_name, 'menu_type' => $menu_type];
 
         // 支持更新其他字段（使用 array_key_exists 允许空字符串和 null 值更新）
+        // 注意：account_type 不允许在编辑时修改，只能在创建时指定
         $allowed_fields = [
-            'account_type', 'menu_key', 'menu_path', 'menu_icon',
+            'menu_key', 'menu_path', 'menu_icon',
             'parent_id', 'component', 'redirect', 'is_required', 'status', 'sort'
         ];
         foreach ($allowed_fields as $field) {
@@ -302,11 +293,10 @@ class Menu extends Model
         }
 
         // 如果 menu_path 发生变化，检查唯一性约束
-        $check_account_type = $update_data['account_type'] ?? $account_type;
         $check_menu_path = $update_data['menu_path'] ?? $info->menu_path;
         if (!empty($check_menu_path)) {
             $exist = self::query()
-                ->where('account_type', $check_account_type)
+                ->where('account_type', $account_type)
                 ->where('menu_path', $check_menu_path)
                 ->where('menu_id', '<>', $menu_id)
                 ->exists();
@@ -376,6 +366,66 @@ class Menu extends Model
         );
 
         return [];
+    }
+
+    /**
+     * 获取目录树形结构（仅目录类型）
+     * @param array $params
+     * @return array
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    public static function getDirTree(array $params = []): array
+    {
+        self::checkEmptyParam($params, ['account_type']);
+
+        $allow_account_types = array_column(AccountTypeEnum::cases(), 'value');
+        if (!in_array($params['account_type'], $allow_account_types)) {
+            throw_exception('账号类型无效');
+        }
+
+        // 只获取目录类型
+        $menus = self::query()
+            ->where('account_type', $params['account_type'])
+            ->where('menu_type', 'dir')
+            ->orderBy('sort', 'asc')
+            ->orderBy('menu_id', 'asc')
+            ->get()
+            ->toArray();
+
+        return self::buildDirTree($menus);
+    }
+
+    /**
+     * 构建目录树形结构
+     * @param array $menus
+     * @param int   $parentId
+     * @return array
+     * @author siushin<siushin@163.com>
+     */
+    private static function buildDirTree(array $menus, int $parentId = 0): array
+    {
+        $tree = [];
+
+        foreach ($menus as $menu) {
+            if ($menu['parent_id'] == $parentId) {
+                $menuItem = [
+                    'menu_id'   => $menu['menu_id'],
+                    'menu_name' => $menu['menu_name'],
+                    'menu_key'  => $menu['menu_key'],
+                ];
+
+                // 递归获取子目录
+                $children = self::buildDirTree($menus, $menu['menu_id']);
+                if (!empty($children)) {
+                    $menuItem['children'] = $children;
+                }
+
+                $tree[] = $menuItem;
+            }
+        }
+
+        return $tree;
     }
 
     /**

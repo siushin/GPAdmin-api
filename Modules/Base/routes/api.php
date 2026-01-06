@@ -88,10 +88,11 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
     Route::post('/role/delete', [RoleController::class, 'delete']);
     // 菜单管理
     Route::post('/menu/index', [MenuController::class, 'index']);
-    Route::post('/menu/tree', [MenuController::class, 'tree']);
     Route::post('/menu/add', [MenuController::class, 'add']);
     Route::post('/menu/update', [MenuController::class, 'update']);
     Route::post('/menu/delete', [MenuController::class, 'delete']);
+    Route::post('/menu/tree', [MenuController::class, 'tree']);
+    Route::post('/menu/dirTree', [MenuController::class, 'dirTree']);
 
     // 日志管理
     Route::post('/log/generalLog', [LogController::class, 'generalLog']);  // 常规日志列表

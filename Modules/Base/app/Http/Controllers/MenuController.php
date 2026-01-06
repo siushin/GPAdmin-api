@@ -135,7 +135,7 @@ class MenuController extends Controller
     /**
      * 添加菜单
      * @return JsonResponse
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     #[OperationAction(OperationActionEnum::add)]
@@ -148,7 +148,7 @@ class MenuController extends Controller
     /**
      * 更新菜单
      * @return JsonResponse
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws Exception
      * @author siushin<siushin@163.com>
      */
     #[OperationAction(OperationActionEnum::update)]
@@ -181,5 +181,17 @@ class MenuController extends Controller
     {
         $params = request()->all();
         return success(Menu::getTreeData($params));
+    }
+
+    /**
+     * 获取目录树形结构（仅目录类型，用于筛选）
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    public function dirTree(): JsonResponse
+    {
+        $params = request()->all();
+        return success(Menu::getDirTree($params));
     }
 }

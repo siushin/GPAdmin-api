@@ -40,13 +40,13 @@ return new class extends Migration {
         // 菜单表
         Schema::create('gpa_menu', function (Blueprint $table) use ($accountTypeComment, $sysParamFlagComment, $menuTypeComment) {
             $table->id('menu_id')->comment('菜单ID');
+            $table->string('menu_type', 20)->default('menu')->comment($menuTypeComment);
             $table->unsignedBigInteger('parent_id')->default(0)->comment('父菜单ID, 0表示顶级菜单');
             $table->string('account_type', 20)->default(AccountTypeEnum::Admin->value)->comment($accountTypeComment);
             $table->string('menu_name', 50)->comment('菜单名称');
             $table->string('menu_key', 100)->nullable()->comment('菜单名称key（用于国际化，如：dashboard.workplace）');
             $table->string('menu_path', 200)->nullable()->comment('路由路径');
             $table->string('menu_icon', 50)->nullable()->comment('图标名称');
-            $table->string('menu_type', 20)->default('menu')->comment($menuTypeComment);
             $table->string('component', 200)->nullable()->comment('组件路径（相对路径，如：./Dashboard/Workplace）');
             $table->string('redirect', 200)->nullable()->comment('重定向路径');
             $table->tinyInteger('status')->default(1)->comment('状态: 1启用, 0禁用');
@@ -58,10 +58,10 @@ return new class extends Migration {
 
             // 同一账号类型下，路径唯一（如果路径不为空）
             // 注意：parent_id=0时表示顶级菜单，parent_id>0时表示子菜单
+            $table->index('menu_type');
             $table->index('parent_id');
             $table->index('account_type');
             $table->index('menu_key');
-            $table->index('menu_type');
             $table->index('status');
             $table->index('is_required');
             $table->index('sort');

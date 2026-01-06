@@ -314,7 +314,7 @@ class AccountController extends Controller
     }
 
     /**
-     * 重置密码
+     * 重置密码（短信验证码重置）
      * @param Request $request
      * @return JsonResponse
      * @throws InvalidArgumentException

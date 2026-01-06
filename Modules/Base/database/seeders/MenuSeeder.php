@@ -45,11 +45,13 @@ class MenuSeeder extends Seeder
 
         // 第一轮：处理顶级菜单（parent_key 为空）
         $topLevelMenus = array_filter($remainingMenus, fn($menu) => empty($menu['parent_key']));
-        $sort = 1;
         foreach ($topLevelMenus as $menu) {
             $menuId = generateId();
             $menuIdMap[$menu['menu_key']] = $menuId;
             $processedKeys[] = $menu['menu_key'];
+
+            // 使用 CSV 中的 sort 值，如果没有则使用默认值 0
+            $sortValue = isset($menu['sort']) && $menu['sort'] !== '' ? (int)$menu['sort'] : 0;
 
             Menu::upsert([
                 [
@@ -64,7 +66,7 @@ class MenuSeeder extends Seeder
                     'component'      => $menu['component'] ?: null,
                     'redirect'       => $menu['redirect'] ?: null,
                     'is_required'    => (int)$menu['is_required'],
-                    'sort'           => $sort++,
+                    'sort'           => $sortValue,
                     'status'         => (int)$menu['status'],
                     'sys_param_flag' => SysParamFlagEnum::Yes,
                 ]
@@ -87,9 +89,8 @@ class MenuSeeder extends Seeder
                     $menuIdMap[$menu['menu_key']] = $menuId;
                     $parentId = $menuIdMap[$parentKey];
 
-                    // 获取同父菜单下的其他子菜单数量，用于计算 sort
-                    $siblingCount = Menu::where('parent_id', $parentId)
-                        ->count();
+                    // 使用 CSV 中的 sort 值，如果没有则使用默认值 0
+                    $sortValue = isset($menu['sort']) && $menu['sort'] !== '' ? (int)$menu['sort'] : 0;
 
                     Menu::upsert([
                         [
@@ -104,7 +105,7 @@ class MenuSeeder extends Seeder
                             'component'      => $menu['component'] ?: null,
                             'redirect'       => $menu['redirect'] ?: null,
                             'is_required'    => (int)$menu['is_required'],
-                            'sort'           => $siblingCount + 1,
+                            'sort'           => $sortValue,
                             'status'         => (int)$menu['status'],
                             'sys_param_flag' => SysParamFlagEnum::Yes,
                         ]

@@ -1,0 +1,81 @@
+<?php
+
+namespace {{ namespace }};
+
+use Exception;
+use Illuminate\Http\JsonResponse;
+use Modules\Base\Enums\OperationActionEnum;
+use Modules\Base\Http\Controllers\Controller;
+use Modules\{{ module }}\Models\{{ model }};
+use Siushin\LaravelTool\Attributes\ControllerName;
+use Siushin\LaravelTool\Attributes\OperationAction;
+use Siushin\Util\Traits\ParamTool;
+
+#[ControllerName('{{ name }}')]
+class {{ class }}Controller extends Controller
+{
+    use ParamTool;
+
+    /**
+     * {{ name }}列表（全部）
+     * @return JsonResponse
+     * @author {{ author }}<{{ email }}>
+     */
+    #[OperationAction(OperationActionEnum::list)]
+    public function list(): JsonResponse
+    {
+        $params = request()->all();
+        return success({{ model }}::getAllData($params));
+    }
+
+    /**
+     * {{ name }}列表（分页）
+     * @return JsonResponse
+     * @author {{ author }}<{{ email }}>
+     */
+    #[OperationAction(OperationActionEnum::index)]
+    public function index(): JsonResponse
+    {
+        $params = request()->all();
+        return success({{ model }}::getPageData($params));
+    }
+
+    /**
+     * 添加{{ name }}
+     * @return JsonResponse
+     * @throws Exception
+     * @author {{ author }}<{{ email }}>
+     */
+    #[OperationAction(OperationActionEnum::add)]
+    public function add(): JsonResponse
+    {
+        $params = request()->all();
+        return success({{ model }}::add{{ model }}($params));
+    }
+
+    /**
+     * 更新{{ name }}
+     * @return JsonResponse
+     * @throws Exception
+     * @author {{ author }}<{{ email }}>
+     */
+    #[OperationAction(OperationActionEnum::update)]
+    public function update(): JsonResponse
+    {
+        $params = request()->all();
+        return success({{ model }}::update{{ model }}($params));
+    }
+
+    /**
+     * 删除{{ name }}
+     * @return JsonResponse
+     * @throws Exception
+     * @author {{ author }}<{{ email }}>
+     */
+    #[OperationAction(OperationActionEnum::delete)]
+    public function delete(): JsonResponse
+    {
+        $params = trimParam(request()->only(['id']));
+        return success({{ model }}::delete{{ model }}($params));
+    }
+}

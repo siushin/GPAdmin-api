@@ -188,24 +188,21 @@ class MenuSeeder extends Seeder
     private function associateMenusToBaseModule(): void
     {
         // 查找Base模块
-        $baseModule = Module::where('module_identifier', 'base')
-            ->orWhere('module_name', 'Base')
-            ->first();
+        $baseModule = Module::where('module_name', 'base')->first();
 
         if (!$baseModule) {
             // 如果Base模块不存在，创建它
             $baseModuleId = generateId();
             Module::upsert([
                 [
-                    'module_id'          => $baseModuleId,
-                    'module_identifier'  => 'base',
-                    'module_name'        => 'Base',
-                    'module_alias'       => '基础服务',
-                    'module_description' => 'LaravelAPI 基础服务，勿删除！',
-                    'status'             => 1,
-                    'priority'           => 0,
+                    'module_id'       => $baseModuleId,
+                    'module_name'     => 'base',
+                    'module_alias'    => '基础服务',
+                    'module_desc'     => 'LaravelAPI 基础服务，勿删除！',
+                    'module_status'   => 1,
+                    'module_priority' => 0,
                 ]
-            ], ['module_identifier']);
+            ], ['module_name']);
         } else {
             $baseModuleId = $baseModule->module_id;
         }

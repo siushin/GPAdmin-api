@@ -43,6 +43,8 @@ return new class extends Migration {
             $table->string('menu_type', 20)->default('menu')->comment($menuTypeComment);
             $table->unsignedBigInteger('parent_id')->default(0)->comment('父菜单ID, 0表示顶级菜单');
             $table->string('account_type', 20)->default(AccountTypeEnum::Admin->value)->comment($accountTypeComment);
+            $table->unsignedBigInteger('module_id')->nullable()->comment('当前所属模块ID');
+            $table->unsignedBigInteger('original_module_id')->nullable()->comment('原始所属模块ID（用于还原功能，为null表示未移动过）');
             $table->string('menu_name', 50)->comment('菜单名称');
             $table->string('menu_key', 100)->nullable()->comment('菜单名称key（用于国际化，如：dashboard.workplace）');
             $table->string('menu_path', 200)->nullable()->comment('路由路径');
@@ -61,6 +63,8 @@ return new class extends Migration {
             $table->index('menu_type');
             $table->index('parent_id');
             $table->index('account_type');
+            $table->index('module_id');
+            $table->index('original_module_id');
             $table->index('menu_key');
             $table->index('status');
             $table->index('is_required');

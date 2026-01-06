@@ -4,6 +4,8 @@ namespace Modules\Base\Models;
 
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Base\Enums\AccountTypeEnum;
 use Modules\Base\Enums\LogActionEnum;
@@ -27,6 +29,8 @@ class Menu extends Model
     protected $fillable = [
         'menu_id',
         'account_type',
+        'module_id',
+        'original_module_id',
         'menu_name',
         'menu_key',
         'menu_path',
@@ -39,6 +43,87 @@ class Menu extends Model
         'sort',
         'status',
     ];
+
+    protected $casts = [
+        'module_id'          => 'integer',
+        'original_module_id' => 'integer',
+        'parent_id'          => 'integer',
+        'is_required'        => 'integer',
+        'sort'               => 'integer',
+        'status'             => 'integer',
+    ];
+
+    /**
+     * 获取当前所属模块
+     */
+    public function module(): BelongsTo
+    {
+        return $this->belongsTo(Module::class, 'module_id', 'module_id');
+    }
+
+    /**
+     * 获取原始所属模块（用于还原）
+     */
+    public function originalModule(): BelongsTo
+    {
+        return $this->belongsTo(Module::class, 'original_module_id', 'module_id');
+    }
+
+    /**
+     * 获取关联的模块（通过中间表）
+     */
+    public function modules(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Module::class,
+            'gpa_module_menu',
+            'menu_id',
+            'module_id',
+            'menu_id',
+            'module_id'
+        )->withPivot(['original_module_id', 'is_root', 'moved_at', 'moved_by'])
+            ->withTimestamps();
+    }
+
+    /**
+     * 检查菜单是否已被移动到其他模块
+     */
+    public function isMoved(): bool
+    {
+        return $this->original_module_id !== null && $this->module_id !== $this->original_module_id;
+    }
+
+    /**
+     * 移动菜单到指定模块
+     * @param int      $targetModuleId 目标模块ID
+     * @param int|null $operatorId     操作人ID
+     * @return bool
+     */
+    public function moveToModule(int $targetModuleId, ?int $operatorId = null): bool
+    {
+        // 如果是首次移动，记录原始模块ID
+        if ($this->original_module_id === null) {
+            $this->original_module_id = $this->module_id;
+        }
+
+        $this->module_id = $targetModuleId;
+        return $this->save();
+    }
+
+    /**
+     * 还原菜单到原始模块
+     * @return bool
+     */
+    public function restoreToOriginalModule(): bool
+    {
+        if ($this->original_module_id === null) {
+            return false; // 没有原始模块记录，无法还原
+        }
+
+        $this->module_id = $this->original_module_id;
+        $this->original_module_id = null;
+        return $this->save();
+    }
 
     protected $hidden = [
         'deleted_at',

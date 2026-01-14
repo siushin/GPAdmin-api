@@ -21,6 +21,17 @@ class MenuSeeder extends Seeder
     {
         $accountType = AccountTypeEnum::Admin->value;
 
+        // 读取当前模块的 module.json 获取模块名称
+        $moduleJsonPath = __DIR__ . '/../../module.json';
+        $moduleName = 'Base'; // 默认值
+        if (file_exists($moduleJsonPath)) {
+            $moduleJson = json_decode(file_get_contents($moduleJsonPath), true);
+            $moduleName = $moduleJson['name'] ?? 'Base';
+        }
+
+        // 查询或创建模块，获取模块ID
+        $moduleId = $this->getOrCreateModuleId($moduleName);
+
         // 读取 CSV 文件
         $csvPath = __DIR__ . '/../../data/menu.csv';
         if (!file_exists($csvPath)) {
@@ -55,20 +66,22 @@ class MenuSeeder extends Seeder
 
             Menu::upsert([
                 [
-                    'menu_id'        => $menuId,
-                    'account_type'   => $accountType,
-                    'menu_name'      => $menu['menu_name'],
-                    'menu_key'       => $menu['menu_key'],
-                    'menu_path'      => $menu['menu_path'],
-                    'menu_icon'      => $menu['menu_icon'],
-                    'menu_type'      => $menu['menu_type'],
-                    'parent_id'      => 0,
-                    'component'      => $menu['component'] ?: null,
-                    'redirect'       => $menu['redirect'] ?: null,
-                    'is_required'    => (int)$menu['is_required'],
-                    'sort'           => $sortValue,
-                    'status'         => (int)$menu['status'],
-                    'sys_param_flag' => SysParamFlagEnum::Yes,
+                    'menu_id'            => $menuId,
+                    'account_type'       => $accountType,
+                    'menu_name'          => $menu['menu_name'],
+                    'menu_key'           => $menu['menu_key'],
+                    'menu_path'          => $menu['menu_path'],
+                    'menu_icon'          => $menu['menu_icon'],
+                    'menu_type'          => $menu['menu_type'],
+                    'parent_id'          => 0,
+                    'module_id'          => $moduleId,
+                    'original_module_id' => $moduleId,
+                    'component'          => $menu['component'] ?: null,
+                    'redirect'           => $menu['redirect'] ?: null,
+                    'is_required'        => (int)$menu['is_required'],
+                    'sort'               => $sortValue,
+                    'status'             => (int)$menu['status'],
+                    'sys_param_flag'     => SysParamFlagEnum::Yes,
                 ]
             ], ['account_type', 'menu_key']);
         }
@@ -94,20 +107,22 @@ class MenuSeeder extends Seeder
 
                     Menu::upsert([
                         [
-                            'menu_id'        => $menuId,
-                            'account_type'   => $accountType,
-                            'menu_name'      => $menu['menu_name'],
-                            'menu_key'       => $menu['menu_key'],
-                            'menu_path'      => $menu['menu_path'],
-                            'menu_icon'      => $menu['menu_icon'],
-                            'menu_type'      => $menu['menu_type'],
-                            'parent_id'      => $parentId,
-                            'component'      => $menu['component'] ?: null,
-                            'redirect'       => $menu['redirect'] ?: null,
-                            'is_required'    => (int)$menu['is_required'],
-                            'sort'           => $sortValue,
-                            'status'         => (int)$menu['status'],
-                            'sys_param_flag' => SysParamFlagEnum::Yes,
+                            'menu_id'            => $menuId,
+                            'account_type'       => $accountType,
+                            'menu_name'          => $menu['menu_name'],
+                            'menu_key'           => $menu['menu_key'],
+                            'menu_path'          => $menu['menu_path'],
+                            'menu_icon'          => $menu['menu_icon'],
+                            'menu_type'          => $menu['menu_type'],
+                            'parent_id'          => $parentId,
+                            'module_id'          => $moduleId,
+                            'original_module_id' => $moduleId,
+                            'component'          => $menu['component'] ?: null,
+                            'redirect'           => $menu['redirect'] ?: null,
+                            'is_required'        => (int)$menu['is_required'],
+                            'sort'               => $sortValue,
+                            'status'             => (int)$menu['status'],
+                            'sys_param_flag'     => SysParamFlagEnum::Yes,
                         ]
                     ], ['account_type', 'menu_key']);
 
@@ -183,49 +198,83 @@ class MenuSeeder extends Seeder
     }
 
     /**
+     * 获取或创建模块ID
+     * @param string $moduleName 模块名称
+     * @return int 模块ID
+     */
+    private function getOrCreateModuleId(string $moduleName): int
+    {
+        // 查找模块
+        $module = Module::where('module_name', $moduleName)->first();
+
+        if ($module) {
+            return $module->module_id;
+        }
+
+        // 读取 module.json 获取模块信息
+        $moduleJsonPath = __DIR__ . '/../../module.json';
+        $moduleData = [
+            'module_name'     => $moduleName,
+            'module_alias'    => strtolower($moduleName),
+            'module_title'    => $moduleName,
+            'module_desc'     => '',
+            'module_status'   => 1,
+            'module_priority' => 0,
+        ];
+
+        if (file_exists($moduleJsonPath)) {
+            $moduleJson = json_decode(file_get_contents($moduleJsonPath), true);
+            $moduleData['module_alias'] = $moduleJson['alias'] ?? strtolower($moduleName);
+            $moduleData['module_title'] = $moduleJson['title'] ?? $moduleJson['alias'] ?? $moduleName;
+            $moduleData['module_desc'] = $moduleJson['description'] ?? '';
+            $moduleData['module_priority'] = $moduleJson['priority'] ?? 0;
+        }
+
+        // 创建模块
+        $moduleId = generateId();
+        Module::upsert([
+            array_merge(['module_id' => $moduleId], $moduleData)
+        ], ['module_name']);
+
+        return $moduleId;
+    }
+
+    /**
      * 关联菜单到Base模块
      */
     private function associateMenusToBaseModule(): void
     {
-        // 查找Base模块
-        $baseModule = Module::where('module_name', 'Base')->first();
-
-        if (!$baseModule) {
-            // 如果Base模块不存在，创建它
-            $baseModuleId = generateId();
-            Module::upsert([
-                [
-                    'module_id'       => $baseModuleId,
-                    'module_name'     => 'Base',
-                    'module_alias'    => 'base',
-                    'module_title'    => '基础服务',
-                    'module_desc'     => 'LaravelAPI 基础服务，勿删除！',
-                    'module_status'   => 1,
-                    'module_priority' => 0,
-                ]
-            ], ['module_name']);
-        } else {
-            $baseModuleId = $baseModule->module_id;
+        // 读取当前模块的 module.json 获取模块名称
+        $moduleJsonPath = __DIR__ . '/../../module.json';
+        $moduleName = 'Base'; // 默认值
+        if (file_exists($moduleJsonPath)) {
+            $moduleJson = json_decode(file_get_contents($moduleJsonPath), true);
+            $moduleName = $moduleJson['name'] ?? 'Base';
         }
 
-        // 获取所有Base模块的Admin菜单
+        // 获取模块ID
+        $moduleId = $this->getOrCreateModuleId($moduleName);
+
+        // 获取所有该模块的Admin菜单
         $menuIds = Menu::where('account_type', AccountTypeEnum::Admin->value)
+            ->where('module_id', $moduleId)
             ->pluck('menu_id')
             ->toArray();
 
-        // 关联菜单到Base模块
+        // 关联菜单到模块
         $moduleMenuData = [];
         foreach ($menuIds as $menuId) {
             // 检查是否已存在关联
-            $exists = ModuleMenu::where('module_id', $baseModuleId)
+            $exists = ModuleMenu::where('module_id', $moduleId)
                 ->where('menu_id', $menuId)
                 ->exists();
 
             if (!$exists) {
                 $moduleMenuData[] = [
-                    'id'        => generateId(),
-                    'module_id' => $baseModuleId,
-                    'menu_id'   => $menuId,
+                    'id'                 => generateId(),
+                    'module_id'          => $moduleId,
+                    'menu_id'            => $menuId,
+                    'original_module_id' => $moduleId,
                 ];
             }
         }

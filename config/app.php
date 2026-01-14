@@ -65,7 +65,7 @@ return [
     |
     */
 
-    'timezone' => env('APP_LOCALE', 'PRC'),
+    'timezone' => env('APP_TIMEZONE', 'PRC'),
 
     /*
     |--------------------------------------------------------------------------

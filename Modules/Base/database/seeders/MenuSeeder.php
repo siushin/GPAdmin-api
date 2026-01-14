@@ -66,22 +66,21 @@ class MenuSeeder extends Seeder
 
             Menu::upsert([
                 [
-                    'menu_id'            => $menuId,
-                    'account_type'       => $accountType,
-                    'menu_name'          => $menu['menu_name'],
-                    'menu_key'           => $menu['menu_key'],
-                    'menu_path'          => $menu['menu_path'],
-                    'menu_icon'          => $menu['menu_icon'],
-                    'menu_type'          => $menu['menu_type'],
-                    'parent_id'          => 0,
-                    'module_id'          => $moduleId,
-                    'original_module_id' => $moduleId,
-                    'component'          => $menu['component'] ?: null,
-                    'redirect'           => $menu['redirect'] ?: null,
-                    'is_required'        => (int)$menu['is_required'],
-                    'sort'               => $sortValue,
-                    'status'             => (int)$menu['status'],
-                    'sys_param_flag'     => SysParamFlagEnum::Yes,
+                    'menu_id'        => $menuId,
+                    'account_type'   => $accountType,
+                    'menu_name'      => $menu['menu_name'],
+                    'menu_key'       => $menu['menu_key'],
+                    'menu_path'      => $menu['menu_path'],
+                    'menu_icon'      => $menu['menu_icon'],
+                    'menu_type'      => $menu['menu_type'],
+                    'parent_id'      => 0,
+                    'module_id'      => $moduleId,
+                    'component'      => $menu['component'] ?: null,
+                    'redirect'       => $menu['redirect'] ?: null,
+                    'is_required'    => (int)$menu['is_required'],
+                    'sort'           => $sortValue,
+                    'status'         => (int)$menu['status'],
+                    'sys_param_flag' => SysParamFlagEnum::Yes,
                 ]
             ], ['account_type', 'menu_key']);
         }
@@ -107,22 +106,21 @@ class MenuSeeder extends Seeder
 
                     Menu::upsert([
                         [
-                            'menu_id'            => $menuId,
-                            'account_type'       => $accountType,
-                            'menu_name'          => $menu['menu_name'],
-                            'menu_key'           => $menu['menu_key'],
-                            'menu_path'          => $menu['menu_path'],
-                            'menu_icon'          => $menu['menu_icon'],
-                            'menu_type'          => $menu['menu_type'],
-                            'parent_id'          => $parentId,
-                            'module_id'          => $moduleId,
-                            'original_module_id' => $moduleId,
-                            'component'          => $menu['component'] ?: null,
-                            'redirect'           => $menu['redirect'] ?: null,
-                            'is_required'        => (int)$menu['is_required'],
-                            'sort'               => $sortValue,
-                            'status'             => (int)$menu['status'],
-                            'sys_param_flag'     => SysParamFlagEnum::Yes,
+                            'menu_id'        => $menuId,
+                            'account_type'   => $accountType,
+                            'menu_name'      => $menu['menu_name'],
+                            'menu_key'       => $menu['menu_key'],
+                            'menu_path'      => $menu['menu_path'],
+                            'menu_icon'      => $menu['menu_icon'],
+                            'menu_type'      => $menu['menu_type'],
+                            'parent_id'      => $parentId,
+                            'module_id'      => $moduleId,
+                            'component'      => $menu['component'] ?: null,
+                            'redirect'       => $menu['redirect'] ?: null,
+                            'is_required'    => (int)$menu['is_required'],
+                            'sort'           => $sortValue,
+                            'status'         => (int)$menu['status'],
+                            'sys_param_flag' => SysParamFlagEnum::Yes,
                         ]
                     ], ['account_type', 'menu_key']);
 
@@ -271,10 +269,9 @@ class MenuSeeder extends Seeder
 
             if (!$exists) {
                 $moduleMenuData[] = [
-                    'id'                 => generateId(),
-                    'module_id'          => $moduleId,
-                    'menu_id'            => $menuId,
-                    'original_module_id' => $moduleId,
+                    'id'        => generateId(),
+                    'module_id' => $moduleId,
+                    'menu_id'   => $menuId,
                 ];
             }
         }

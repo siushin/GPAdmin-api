@@ -93,6 +93,9 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
     Route::post('/role/getMenus', [RoleController::class, 'getMenus']);
     Route::post('/role/updateMenus', [RoleController::class, 'updateMenus']);
     Route::post('/role/getModuleList', [RoleController::class, 'getModuleList']);
+    Route::post('/role/moveMenuToModule', [RoleController::class, 'moveMenuToModule']);
+    Route::post('/role/moveMenuBackToOriginal', [RoleController::class, 'moveMenuBackToOriginal']);
+    Route::post('/role/moveAllBackByModule', [RoleController::class, 'moveAllBackByModule']);
     // 菜单管理
     Route::post('/menu/index', [MenuController::class, 'index']);
     Route::post('/menu/add', [MenuController::class, 'add']);
@@ -100,8 +103,6 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
     Route::post('/menu/delete', [MenuController::class, 'delete']);
     Route::post('/menu/tree', [MenuController::class, 'tree']);
     Route::post('/menu/dirTree', [MenuController::class, 'dirTree']);
-    Route::post('/menu/moveToModule', [MenuController::class, 'moveToModule']);
-    Route::post('/menu/moveBackToOriginal', [MenuController::class, 'moveBackToOriginal']);
 
     // 日志管理
     Route::post('/log/generalLog', [LogController::class, 'generalLog']);  // 常规日志列表

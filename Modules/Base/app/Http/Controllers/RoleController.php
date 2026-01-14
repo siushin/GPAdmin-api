@@ -127,11 +127,28 @@ class RoleController extends Controller
             ->get()
             ->toArray();
 
-        // 获取角色已分配的菜单ID
-        $checkedMenuIds = RoleMenu::query()
+        // 获取角色已分配的菜单（包含 target_module_id 信息）
+        $roleMenus = RoleMenu::query()
             ->where('role_id', $roleId)
-            ->pluck('menu_id')
+            ->get()
+            ->keyBy('menu_id')
             ->toArray();
+
+        $checkedMenuIds = array_keys($roleMenus);
+
+        // 构建菜单移动映射：menu_id => target_module_id
+        // 只包含target_module_id不等于原始module_id的记录
+        $menuMoveMap = [];
+        $menusMap = array_column($menus, null, 'menu_id');
+        foreach ($roleMenus as $menuId => $roleMenu) {
+            if (!empty($roleMenu['target_module_id'])) {
+                $menu = $menusMap[$menuId] ?? null;
+                // 如果目标模块不等于原始模块，才包含在map中
+                if ($menu && $roleMenu['target_module_id'] != $menu['module_id']) {
+                    $menuMoveMap[$menuId] = $roleMenu['target_module_id'];
+                }
+            }
+        }
 
         // 按模块分组菜单
         $modulesWithMenus = [];
@@ -141,7 +158,7 @@ class RoleController extends Controller
             });
 
             if (!empty($moduleMenus)) {
-                $menuTree = $this->buildMenuTree(array_values($moduleMenus));
+                $menuTree = $this->buildMenuTree(array_values($moduleMenus), 0, $menuMoveMap);
                 $modulesWithMenus[] = [
                     'module' => [
                         'module_id'    => $module->module_id,
@@ -160,7 +177,7 @@ class RoleController extends Controller
         });
 
         if (!empty($orphanMenus)) {
-            $menuTree = $this->buildMenuTree(array_values($orphanMenus));
+            $menuTree = $this->buildMenuTree(array_values($orphanMenus), 0, $menuMoveMap);
             array_unshift($modulesWithMenus, [
                 'module' => [
                     'module_id'    => 0,
@@ -175,6 +192,7 @@ class RoleController extends Controller
         return success([
             'modules_with_menus' => $modulesWithMenus,
             'checked_menu_ids'   => $checkedMenuIds,
+            'menu_move_map'      => $menuMoveMap,
         ]);
     }
 
@@ -192,6 +210,7 @@ class RoleController extends Controller
 
         $roleId = $params['role_id'];
         $menuIds = $params['menu_ids'] ?? [];
+        $menuMoveMap = $params['menu_move_map'] ?? []; // 菜单移动映射：menu_id => target_module_id
 
         // 验证角色是否存在
         $role = Role::query()->find($roleId);
@@ -207,14 +226,30 @@ class RoleController extends Controller
 
             // 如果有新的菜单ID，批量插入
             if (!empty($menuIds)) {
+                // 获取所有菜单的原始模块ID
+                $menus = Menu::query()->whereIn('menu_id', $menuIds)->get()->keyBy('menu_id');
+
                 $insertData = [];
                 $now = now();
                 foreach ($menuIds as $menuId) {
+                    $menu = $menus[$menuId] ?? null;
+                    if (!$menu) {
+                        continue;
+                    }
+
+                    $targetModuleId = $menuMoveMap[$menuId] ?? null;
+                    // 如果目标模块等于原始模块，则设置为null
+                    $finalTargetModuleId = null;
+                    if ($targetModuleId !== null && $targetModuleId != $menu->module_id) {
+                        $finalTargetModuleId = $targetModuleId;
+                    }
+
                     $insertData[] = [
-                        'role_id'    => $roleId,
-                        'menu_id'    => $menuId,
-                        'created_at' => $now,
-                        'updated_at' => $now,
+                        'role_id'          => $roleId,
+                        'menu_id'          => $menuId,
+                        'target_module_id' => $finalTargetModuleId,
+                        'created_at'       => $now,
+                        'updated_at'       => $now,
                     ];
                 }
                 RoleMenu::query()->insert($insertData);
@@ -248,29 +283,197 @@ class RoleController extends Controller
     }
 
     /**
+     * 移动菜单组到新模块
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::update)]
+    public function moveMenuToModule(): JsonResponse
+    {
+        $params = request()->all();
+        self::checkEmptyParam($params, ['role_id', 'menu_ids', 'target_module_id']);
+
+        $roleId = $params['role_id'];
+        $menuIds = $params['menu_ids'];
+        $targetModuleId = $params['target_module_id'];
+
+        // 验证角色是否存在
+        $role = Role::query()->find($roleId);
+        if (!$role) {
+            throw_exception('角色不存在');
+        }
+
+        // 验证目标模块是否存在
+        $targetModule = Module::query()->find($targetModuleId);
+        if (!$targetModule) {
+            throw_exception('目标模块不存在');
+        }
+
+        // 开启事务
+        DB::beginTransaction();
+        try {
+            // 获取菜单的原始模块ID
+            $menus = Menu::query()->whereIn('menu_id', $menuIds)->get();
+
+            // 逐个更新，如果目标模块等于原始模块，则设置为null
+            foreach ($menus as $menu) {
+                $finalTargetModuleId = null;
+                // 如果目标模块不等于原始模块，才设置target_module_id
+                if ($targetModuleId != $menu->module_id) {
+                    $finalTargetModuleId = $targetModuleId;
+                }
+
+                RoleMenu::query()
+                    ->where('role_id', $roleId)
+                    ->where('menu_id', $menu->menu_id)
+                    ->update(['target_module_id' => $finalTargetModuleId]);
+            }
+
+            DB::commit();
+
+            return success([], '移动成功');
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw_exception('移动失败：' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 将菜单组移回原模块
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::update)]
+    public function moveMenuBackToOriginal(): JsonResponse
+    {
+        $params = request()->all();
+        self::checkEmptyParam($params, ['role_id', 'menu_ids']);
+
+        $roleId = $params['role_id'];
+        $menuIds = $params['menu_ids'];
+
+        // 验证角色是否存在
+        $role = Role::query()->find($roleId);
+        if (!$role) {
+            throw_exception('角色不存在');
+        }
+
+        // 开启事务
+        DB::beginTransaction();
+        try {
+            // 清除角色菜单关联表中的 target_module_id
+            RoleMenu::query()
+                ->where('role_id', $roleId)
+                ->whereIn('menu_id', $menuIds)
+                ->update(['target_module_id' => null]);
+
+            DB::commit();
+
+            return success([], '已移回原处');
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw_exception('移回失败：' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 将指定模块下所有已移入的菜单组移回原模块
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::update)]
+    public function moveAllBackByModule(): JsonResponse
+    {
+        $params = request()->all();
+        self::checkEmptyParam($params, ['role_id', 'module_id']);
+
+        $roleId = $params['role_id'];
+        $moduleId = $params['module_id'];
+
+        // 验证角色是否存在
+        $role = Role::query()->find($roleId);
+        if (!$role) {
+            throw_exception('角色不存在');
+        }
+
+        // 验证模块是否存在
+        $module = Module::query()->find($moduleId);
+        if (!$module) {
+            throw_exception('模块不存在');
+        }
+
+        // 开启事务
+        DB::beginTransaction();
+        try {
+            // 获取该模块下所有菜单的原始模块ID
+            $menus = Menu::query()
+                ->where('module_id', $moduleId)
+                ->get()
+                ->keyBy('menu_id');
+
+            // 获取该角色在该模块下所有已移入的菜单（target_module_id = moduleId 且不等于原始module_id）
+            $roleMenus = RoleMenu::query()
+                ->where('role_id', $roleId)
+                ->where('target_module_id', $moduleId)
+                ->whereIn('menu_id', array_keys($menus->toArray()))
+                ->get();
+
+            $menuIds = [];
+            foreach ($roleMenus as $roleMenu) {
+                $menu = $menus[$roleMenu->menu_id] ?? null;
+                // 如果目标模块不等于原始模块，说明是移入的
+                if ($menu && $roleMenu->target_module_id != $menu->module_id) {
+                    $menuIds[] = $roleMenu->menu_id;
+                }
+            }
+
+            // 清除这些菜单的 target_module_id
+            if (!empty($menuIds)) {
+                RoleMenu::query()
+                    ->where('role_id', $roleId)
+                    ->whereIn('menu_id', $menuIds)
+                    ->update(['target_module_id' => null]);
+            }
+
+            DB::commit();
+
+            return success(['count' => count($menuIds)], "已将 " . count($menuIds) . " 个菜单移回原处");
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw_exception('移回失败：' . $e->getMessage());
+        }
+    }
+
+    /**
      * 构建菜单树形结构
      * @param array $menus
      * @param int   $parentId
+     * @param array $menuMoveMap 菜单移动映射
      * @return array
      */
-    private function buildMenuTree(array $menus, int $parentId = 0): array
+    private function buildMenuTree(array $menus, int $parentId = 0, array $menuMoveMap = []): array
     {
         $tree = [];
 
         foreach ($menus as $menu) {
             if ($menu['parent_id'] == $parentId) {
+                $menuId = $menu['menu_id'];
                 $menuItem = [
-                    'menu_id'            => $menu['menu_id'],
-                    'menu_name'          => $menu['menu_name'],
-                    'menu_key'           => $menu['menu_key'],
-                    'menu_type'          => $menu['menu_type'],
-                    'parent_id'          => $menu['parent_id'],
-                    'is_required'        => $menu['is_required'] ?? 0,
-                    'original_module_id' => $menu['original_module_id'] ?? null,
+                    'menu_id'          => $menuId,
+                    'menu_name'        => $menu['menu_name'],
+                    'menu_key'         => $menu['menu_key'],
+                    'menu_type'        => $menu['menu_type'],
+                    'parent_id'        => $menu['parent_id'],
+                    'module_id'        => $menu['module_id'] ?? null,
+                    'is_required'      => $menu['is_required'] ?? 0,
+                    'target_module_id' => $menuMoveMap[$menuId] ?? null,
                 ];
 
                 // 递归获取子菜单
-                $children = $this->buildMenuTree($menus, $menu['menu_id']);
+                $children = $this->buildMenuTree($menus, $menuId, $menuMoveMap);
                 if (!empty($children)) {
                     $menuItem['children'] = $children;
                 }

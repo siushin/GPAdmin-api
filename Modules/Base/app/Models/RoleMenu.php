@@ -15,6 +15,13 @@ class RoleMenu extends Model
     protected $fillable = [
         'role_id',
         'menu_id',
+        'target_module_id',
+    ];
+
+    protected $casts = [
+        'role_id'          => 'integer',
+        'menu_id'          => 'integer',
+        'target_module_id' => 'integer',
     ];
 
     /**
@@ -33,6 +40,24 @@ class RoleMenu extends Model
     public function menu(): BelongsTo
     {
         return $this->belongsTo(Menu::class, 'menu_id', 'menu_id');
+    }
+
+    /**
+     * 关联目标模块
+     * @return BelongsTo
+     */
+    public function targetModule(): BelongsTo
+    {
+        return $this->belongsTo(Module::class, 'target_module_id', 'module_id');
+    }
+
+    /**
+     * 检查菜单是否已被移动到其他模块
+     * @return bool
+     */
+    public function isMoved(): bool
+    {
+        return $this->target_module_id !== null;
     }
 }
 

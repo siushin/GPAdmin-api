@@ -151,5 +151,31 @@ class UserController extends Controller
         $params = request()->all();
         return success(User::batchDeleteUser($params));
     }
+
+    /**
+     * 获取用户角色
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::list)]
+    public function getRoles(): JsonResponse
+    {
+        $params = trimParam(request()->only(['account_id']));
+        return success(User::getAccountRoles($params));
+    }
+
+    /**
+     * 更新用户角色
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::update)]
+    public function updateRoles(): JsonResponse
+    {
+        $params = request()->all();
+        return success(User::updateAccountRoles($params));
+    }
 }
 

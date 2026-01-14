@@ -4,6 +4,7 @@ namespace Modules\Base\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Modules\Base\Models\Dictionary;
 use Modules\Base\Models\Organization;
 
@@ -17,9 +18,9 @@ class OrganizationSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0'); // 关闭外键检查
-        DB::table('gpa_organization')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1'); // 开启外键检查
+        Schema::disableForeignKeyConstraints(); // 关闭外键检查
+        Organization::query()->truncate();
+        Schema::enableForeignKeyConstraints(); // 开启外键检查
 
         // 获取组织架构类型的字典ID（行政区划）
         $organization_tid = Dictionary::getDictionaryIdByCode('OrganizationType', 'region');

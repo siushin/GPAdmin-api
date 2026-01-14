@@ -149,5 +149,31 @@ class AdminController extends Controller
         $params = trimParam(request()->only(['account_id']));
         return success(Admin::getAccountDepartments($params));
     }
+
+    /**
+     * 获取管理员角色
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::list)]
+    public function getRoles(): JsonResponse
+    {
+        $params = trimParam(request()->only(['account_id']));
+        return success(Admin::getAccountRoles($params));
+    }
+
+    /**
+     * 更新管理员角色
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::update)]
+    public function updateRoles(): JsonResponse
+    {
+        $params = request()->all();
+        return success(Admin::updateAccountRoles($params));
+    }
 }
 

@@ -14,6 +14,7 @@ use Modules\Base\Enums\ResourceTypeEnum;
 use Siushin\LaravelTool\Enums\SocialTypeEnum;
 use Siushin\Util\Traits\ParamTool;
 use Throwable;
+use Modules\Base\Models\UserRole;
 
 /**
  * 模型：客户
@@ -412,8 +413,14 @@ class User extends Model
 
         // 更新账号状态
         // status: 1=通过(正常), -2=拒绝(已拒绝)
-        $account->status = $params['status'] == 1 ? 1 : -2;
+        $newStatus = $params['status'] == 1 ? 1 : -2;
+        $account->status = $newStatus;
         $account->save();
+
+        // 审核通过时，分配默认用户角色
+        if ($newStatus === 1) {
+            self::assignDefaultRole($account->id);
+        }
 
         // 记录审计日志
         $new_data = $account->fresh()->only(['id', 'username', 'account_type', 'status']);
@@ -475,6 +482,11 @@ class User extends Model
                     // 更新账号状态
                     $account->status = $status;
                     $account->save();
+
+                    // 审核通过时，分配默认用户角色
+                    if ($status === 1) {
+                        self::assignDefaultRole($account->id);
+                    }
 
                     // 记录审计日志
                     $new_data = $account->fresh()->only(['id', 'username', 'account_type', 'status']);
@@ -606,6 +618,173 @@ class User extends Model
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
+        }
+    }
+
+    /**
+     * 获取用户角色列表
+     * @param array $params
+     * @return array
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    public static function getAccountRoles(array $params): array
+    {
+        if (empty($params['account_id'])) {
+            throw_exception('缺少 account_id 参数');
+        }
+        $accountId = $params['account_id'];
+
+        // 验证账号是否存在且为用户
+        $account = Account::query()->find($accountId);
+        if (!$account) {
+            throw_exception('账号不存在');
+        }
+        if ($account->account_type !== AccountTypeEnum::User) {
+            throw_exception('该账号不是用户账号');
+        }
+
+        // 获取所有可用的用户角色
+        $allRoles = Role::query()
+            ->where('account_type', AccountTypeEnum::User->value)
+            ->where('status', 1)
+            ->orderBy('sort', 'asc')
+            ->orderBy('role_id', 'asc')
+            ->get(['role_id', 'role_name', 'role_code', 'description'])
+            ->toArray();
+
+        // 获取账号已分配的角色ID
+        $checkedRoleIds = UserRole::query()
+            ->where('account_id', $accountId)
+            ->pluck('role_id')
+            ->toArray();
+
+        return [
+            'all_roles'        => $allRoles,
+            'checked_role_ids' => $checkedRoleIds,
+        ];
+    }
+
+    /**
+     * 为用户分配默认角色（普通用户角色）
+     * @param int|string $accountId
+     * @return void
+     * @author siushin<siushin@163.com>
+     */
+    public static function assignDefaultRole(int|string $accountId): void
+    {
+        // 获取默认用户角色（普通用户）
+        $defaultRole = Role::query()
+            ->where('account_type', AccountTypeEnum::User->value)
+            ->where('role_code', 'normal_user')
+            ->where('status', 1)
+            ->first();
+
+        if (!$defaultRole) {
+            // 如果没有默认角色，不分配
+            return;
+        }
+
+        // 检查是否已分配该角色
+        $exists = UserRole::query()
+            ->where('account_id', $accountId)
+            ->where('role_id', $defaultRole->role_id)
+            ->exists();
+
+        if (!$exists) {
+            UserRole::query()->insert([
+                'id'         => generateId(),
+                'account_id' => $accountId,
+                'role_id'    => $defaultRole->role_id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    /**
+     * 更新用户角色
+     * @param array $params
+     * @return array
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    public static function updateAccountRoles(array $params): array
+    {
+        if (empty($params['account_id'])) {
+            throw_exception('缺少 account_id 参数');
+        }
+        $accountId = $params['account_id'];
+        $roleIds = $params['role_ids'] ?? [];
+
+        // 验证账号是否存在且为用户
+        $account = Account::query()->find($accountId);
+        if (!$account) {
+            throw_exception('账号不存在');
+        }
+        if ($account->account_type !== AccountTypeEnum::User) {
+            throw_exception('该账号不是用户账号');
+        }
+
+        // 验证角色是否存在且属于用户类型
+        if (!empty($roleIds)) {
+            $validRoles = Role::query()
+                ->whereIn('role_id', $roleIds)
+                ->where('account_type', AccountTypeEnum::User->value)
+                ->where('status', 1)
+                ->pluck('role_id')
+                ->toArray();
+
+            if (count($validRoles) !== count($roleIds)) {
+                throw_exception('部分角色不存在或不属于用户类型');
+            }
+        }
+
+        // 获取旧的角色ID
+        $oldRoleIds = UserRole::query()
+            ->where('account_id', $accountId)
+            ->pluck('role_id')
+            ->toArray();
+
+        DB::beginTransaction();
+        try {
+            // 删除原有的角色关联
+            UserRole::query()->where('account_id', $accountId)->delete();
+
+            // 如果有新的角色ID，批量插入
+            if (!empty($roleIds)) {
+                $insertData = [];
+                $now = now();
+                foreach ($roleIds as $roleId) {
+                    $insertData[] = [
+                        'account_id' => $accountId,
+                        'role_id'    => $roleId,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                }
+                UserRole::query()->insert($insertData);
+            }
+
+            DB::commit();
+
+            // 记录审计日志
+            logAudit(
+                request(),
+                currentUserId(),
+                '用户管理',
+                OperationActionEnum::update->value,
+                ResourceTypeEnum::user->value,
+                $accountId,
+                ['role_ids' => $oldRoleIds],
+                ['role_ids' => $roleIds],
+                "更新用户角色: {$account->username}"
+            );
+
+            return [];
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw_exception('更新用户角色失败：' . $e->getMessage());
         }
     }
 }

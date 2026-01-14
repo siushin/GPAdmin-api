@@ -13,6 +13,7 @@ use Modules\Base\Enums\ResourceTypeEnum;
 use Modules\Base\Models\Account;
 use Modules\Base\Models\AccountProfile;
 use Modules\Base\Models\AccountSocial;
+use Modules\Base\Models\User;
 use Modules\Base\Services\AuthService;
 use Modules\Sms\Enums\SmsTypeEnum;
 use Modules\Sms\Services\SmsService;
@@ -287,6 +288,11 @@ class AccountController extends Controller
             'social_account' => $request['phone'],
             'is_verified'    => false,
         ]);
+
+        // 注册成功且状态为正常时，分配默认用户角色
+        if ($account->status === 1) {
+            User::assignDefaultRole($account->id);
+        }
 
         // 记录注册日志
         $extend_data = [

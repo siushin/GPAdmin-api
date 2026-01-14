@@ -4,8 +4,11 @@ namespace Modules\Base\Services;
 
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Modules\Base\Models\AuditLog;
+use Modules\Base\Models\GeneralLog;
+use Modules\Base\Models\LoginLog;
+use Modules\Base\Models\OperationLog;
 use Modules\Base\Models\AccountSocial;
 use Siushin\LaravelTool\Enums\RequestSourceEnum;
 use Siushin\LaravelTool\Enums\SocialTypeEnum;
@@ -64,7 +67,7 @@ class LogService
                 'created_at'  => now(),
             ];
 
-            return DB::table('gpa_logs')->insert($data);
+            return GeneralLog::query()->insert($data);
         } catch (Exception $e) {
             Log::error('记录常规日志失败: ' . $e->getMessage());
             return false;
@@ -121,7 +124,7 @@ class LogService
                 'operated_at'    => now(),
             ];
 
-            return DB::table('gpa_operation_log')->insert($data);
+            return OperationLog::query()->insert($data);
         } catch (Exception $e) {
             Log::error('记录操作日志失败: ' . $e->getMessage());
             return false;
@@ -176,7 +179,7 @@ class LogService
                 'audited_at'    => now(),
             ];
 
-            return DB::table('gpa_audit_log')->insert($data);
+            return AuditLog::query()->insert($data);
         } catch (Exception $e) {
             Log::error('记录审计日志失败: ' . $e->getMessage());
             return false;
@@ -225,7 +228,7 @@ class LogService
                 'login_at'         => now(),
             ];
 
-            return DB::table('gpa_login_log')->insert($data);
+            return LoginLog::query()->insert($data);
         } catch (Exception $e) {
             Log::error('记录登录日志失败: ' . $e->getMessage());
             return false;

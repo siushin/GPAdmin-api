@@ -4,10 +4,11 @@ namespace Modules\Base\Http\Controllers;
 
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 use Modules\Base\Enums\AccountTypeEnum;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Menu;
+use Modules\Base\Models\RoleMenu;
+use Modules\Base\Models\UserRole;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Siushin\LaravelTool\Attributes\ControllerName;
@@ -44,27 +45,41 @@ class MenuController extends Controller
                 ->get()
                 ->toArray();
         } else {
-            // 普通用户根据角色获取菜单
-            $menuIds = DB::table('gpa_user_role')
-                ->join('gpa_role_menu', 'gpa_user_role.role_id', '=', 'gpa_role_menu.role_id')
-                ->where('gpa_user_role.account_id', $user->id)
-                ->pluck('gpa_role_menu.menu_id')
+            // 获取用户所有启用角色的ID
+            $roleIds = UserRole::query()
+                ->where('account_id', $user->id)
+                ->whereHas('role', function ($query) {
+                    $query->where('status', 1);
+                })
+                ->pluck('role_id')
                 ->toArray();
 
+            // 获取这些角色关联的所有菜单ID（多角色去重）
+            $menuIds = [];
+            if (!empty($roleIds)) {
+                $menuIds = RoleMenu::query()
+                    ->whereIn('role_id', $roleIds)
+                    ->distinct()
+                    ->pluck('menu_id')
+                    ->toArray();
+            }
+
             // 获取必须选中的菜单（is_required = 1）
-            $requiredMenuIds = Menu::where('account_type', $user->account_type->value)
+            $requiredMenuIds = Menu::query()
+                ->where('account_type', $user->account_type->value)
                 ->where('is_required', 1)
                 ->where('status', 1)
                 ->pluck('menu_id')
                 ->toArray();
 
             // 合并必须选中的菜单和角色分配的菜单
-            $allMenuIds = array_unique(array_merge($menuIds, $requiredMenuIds));
+            $allMenuIds = array_values(array_unique(array_merge($menuIds, $requiredMenuIds)));
 
             if (empty($allMenuIds)) {
                 $menus = [];
             } else {
-                $menus = Menu::whereIn('menu_id', $allMenuIds)
+                $menus = Menu::query()
+                    ->whereIn('menu_id', $allMenuIds)
                     ->where('status', 1)
                     ->orderBy('sort')
                     ->orderBy('menu_id')

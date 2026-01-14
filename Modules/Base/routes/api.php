@@ -49,6 +49,8 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
     Route::post('/admin/getLogs', [AdminController::class, 'getLogs']);
     Route::post('/admin/batchRemoveFromCompany', [AdminController::class, 'batchRemoveFromCompany']);
     Route::post('/admin/getAccountDepartments', [AdminController::class, 'getAccountDepartments']);
+    Route::post('/admin/getRoles', [AdminController::class, 'getRoles']);
+    Route::post('/admin/updateRoles', [AdminController::class, 'updateRoles']);
 
     // 用户管理
     Route::post('/user/index', [UserController::class, 'index']);
@@ -60,6 +62,8 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
     Route::post('/user/audit', [UserController::class, 'audit']);
     Route::post('/user/batchAudit', [UserController::class, 'batchAudit']);
     Route::post('/user/batchDelete', [UserController::class, 'batchDelete']);
+    Route::post('/user/getRoles', [UserController::class, 'getRoles']);
+    Route::post('/user/updateRoles', [UserController::class, 'updateRoles']);
 
     // 文件管理
     Route::post('/file/upload', [FileController::class, 'upload']);     // 上传文件
@@ -86,6 +90,8 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
     Route::post('/role/add', [RoleController::class, 'add']);
     Route::post('/role/update', [RoleController::class, 'update']);
     Route::post('/role/delete', [RoleController::class, 'delete']);
+    Route::post('/role/getMenus', [RoleController::class, 'getMenus']);
+    Route::post('/role/updateMenus', [RoleController::class, 'updateMenus']);
     // 菜单管理
     Route::post('/menu/index', [MenuController::class, 'index']);
     Route::post('/menu/add', [MenuController::class, 'add']);

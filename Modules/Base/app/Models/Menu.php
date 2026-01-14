@@ -11,6 +11,7 @@ use Modules\Base\Enums\AccountTypeEnum;
 use Modules\Base\Enums\LogActionEnum;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Enums\ResourceTypeEnum;
+use Modules\Base\Enums\SysParamFlagEnum;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Siushin\LaravelTool\Traits\ModelTool;
@@ -51,6 +52,7 @@ class Menu extends Model
         'is_required'        => 'integer',
         'sort'               => 'integer',
         'status'             => 'integer',
+        'sys_param_flag'     => 'integer',
     ];
 
     /**
@@ -425,6 +427,11 @@ class Menu extends Model
 
         $info = self::query()->find($menu_id);
         !$info && throw_exception('数据不存在');
+
+        // 检查是否为系统菜单，禁止删除
+        if ($info->sys_param_flag === SysParamFlagEnum::Yes->value) {
+            throw_exception('系统菜单禁止删除');
+        }
 
         // 检查是否有子菜单
         $hasChildren = self::query()->where('parent_id', $menu_id)->exists();

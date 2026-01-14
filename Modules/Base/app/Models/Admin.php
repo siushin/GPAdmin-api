@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\Hash;
 use Modules\Base\Enums\AccountTypeEnum;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Enums\ResourceTypeEnum;
-use Modules\Base\Models\AccountDepartment;
 use Siushin\LaravelTool\Enums\SocialTypeEnum;
 use Siushin\Util\Traits\ParamTool;
+use Modules\Base\Models\UserRole;
 
 /**
  * 模型：管理员
@@ -466,6 +466,43 @@ class Admin extends Model
                 }
             }
 
+            // 处理角色关联（role_ids）
+            if (isset($params['role_ids']) && is_array($params['role_ids'])) {
+                $roleIds = array_filter($params['role_ids'], function ($id) {
+                    return !empty($id) && $id > 0;
+                });
+
+                if (!empty($roleIds)) {
+                    // 验证角色是否存在且属于管理员类型
+                    $validRoles = Role::query()
+                        ->whereIn('role_id', $roleIds)
+                        ->where('account_type', AccountTypeEnum::Admin->value)
+                        ->where('status', 1)
+                        ->pluck('role_id')
+                        ->toArray();
+
+                    if (count($validRoles) !== count($roleIds)) {
+                        throw_exception('部分角色不存在或不属于管理员类型');
+                    }
+
+                    // 创建角色关联记录
+                    $insertData = [];
+                    $now = now();
+                    foreach ($roleIds as $roleId) {
+                        $insertData[] = [
+                            'account_id' => $account->id,
+                            'role_id'    => $roleId,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+                    }
+
+                    if (!empty($insertData)) {
+                        UserRole::query()->insert($insertData);
+                    }
+                }
+            }
+
             DB::commit();
 
             // 记录审计日志
@@ -718,6 +755,49 @@ class Admin extends Model
 
                         if (!empty($insertData)) {
                             AccountDepartment::query()->insert($insertData);
+                        }
+                    }
+                }
+            }
+
+            // 处理角色关联（role_ids）
+            if (isset($params['role_ids'])) {
+                // 删除该账号的所有角色关联
+                UserRole::query()->where('account_id', $accountId)->delete();
+
+                // 如果传入了角色ID数组，创建新的关联记录
+                if (is_array($params['role_ids']) && !empty($params['role_ids'])) {
+                    $roleIds = array_filter($params['role_ids'], function ($id) {
+                        return !empty($id) && $id > 0;
+                    });
+
+                    if (!empty($roleIds)) {
+                        // 验证角色是否存在且属于管理员类型
+                        $validRoles = Role::query()
+                            ->whereIn('role_id', $roleIds)
+                            ->where('account_type', AccountTypeEnum::Admin->value)
+                            ->where('status', 1)
+                            ->pluck('role_id')
+                            ->toArray();
+
+                        if (count($validRoles) !== count($roleIds)) {
+                            throw_exception('部分角色不存在或不属于管理员类型');
+                        }
+
+                        // 创建角色关联记录
+                        $insertData = [];
+                        $now = now();
+                        foreach ($roleIds as $roleId) {
+                            $insertData[] = [
+                                'account_id' => $accountId,
+                                'role_id'    => $roleId,
+                                'created_at' => $now,
+                                'updated_at' => $now,
+                            ];
+                        }
+
+                        if (!empty($insertData)) {
+                            UserRole::query()->insert($insertData);
                         }
                     }
                 }
@@ -1143,6 +1223,135 @@ class Admin extends Model
         unset($item);
 
         return $result;
+    }
+
+    /**
+     * 获取管理员角色列表
+     * @param array $params
+     * @return array
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    public static function getAccountRoles(array $params): array
+    {
+        $accountId = $params['account_id'] ?? 0;
+
+        // 如果传入了有效的 account_id，验证账号是否存在且为管理员
+        if ($accountId > 0) {
+            $account = Account::query()->find($accountId);
+            if (!$account) {
+                throw_exception('账号不存在');
+            }
+            if ($account->account_type !== AccountTypeEnum::Admin) {
+                throw_exception('该账号不是管理员账号');
+            }
+        }
+
+        // 获取所有可用的管理员角色
+        $allRoles = Role::query()
+            ->where('account_type', AccountTypeEnum::Admin->value)
+            ->where('status', 1)
+            ->orderBy('sort', 'asc')
+            ->orderBy('role_id', 'asc')
+            ->get(['role_id', 'role_name', 'role_code', 'description'])
+            ->toArray();
+
+        // 获取账号已分配的角色ID
+        $checkedRoleIds = UserRole::query()
+            ->where('account_id', $accountId)
+            ->pluck('role_id')
+            ->toArray();
+
+        return [
+            'all_roles'        => $allRoles,
+            'checked_role_ids' => $checkedRoleIds,
+        ];
+    }
+
+    /**
+     * 更新管理员角色
+     * @param array $params
+     * @return array
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    public static function updateAccountRoles(array $params): array
+    {
+        if (empty($params['account_id'])) {
+            throw_exception('缺少 account_id 参数');
+        }
+        $accountId = $params['account_id'];
+        $roleIds = $params['role_ids'] ?? [];
+
+        // 验证账号是否存在且为管理员
+        $account = Account::query()->find($accountId);
+        if (!$account) {
+            throw_exception('账号不存在');
+        }
+        if ($account->account_type !== AccountTypeEnum::Admin) {
+            throw_exception('该账号不是管理员账号');
+        }
+
+        // 验证角色是否存在且属于管理员类型
+        if (!empty($roleIds)) {
+            $validRoles = Role::query()
+                ->whereIn('role_id', $roleIds)
+                ->where('account_type', AccountTypeEnum::Admin->value)
+                ->where('status', 1)
+                ->pluck('role_id')
+                ->toArray();
+
+            if (count($validRoles) !== count($roleIds)) {
+                throw_exception('部分角色不存在或不属于管理员类型');
+            }
+        }
+
+        // 获取旧的角色ID
+        $oldRoleIds = UserRole::query()
+            ->where('account_id', $accountId)
+            ->pluck('role_id')
+            ->toArray();
+
+        DB::beginTransaction();
+        try {
+            // 删除原有的角色关联
+            UserRole::query()->where('account_id', $accountId)->delete();
+
+            // 如果有新的角色ID，批量插入
+            if (!empty($roleIds)) {
+                $insertData = [];
+                $now = now();
+                foreach ($roleIds as $roleId) {
+                    $insertData[] = [
+                        'account_id' => $accountId,
+                        'role_id'    => $roleId,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                }
+                UserRole::query()->insert($insertData);
+            }
+
+            DB::commit();
+
+            // 记录审计日志
+            logAudit(
+                request(),
+                currentUserId(),
+                '管理员列表',
+                OperationActionEnum::update->value,
+                ResourceTypeEnum::user->value,
+                $accountId,
+                ['role_ids' => $oldRoleIds],
+                ['role_ids' => $roleIds],
+                "更新管理员角色: {$account->username}"
+            );
+
+            return [];
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw_exception('更新管理员角色失败：' . $e->getMessage());
+        }
     }
 
 }

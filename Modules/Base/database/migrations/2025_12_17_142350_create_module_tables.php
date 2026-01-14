@@ -11,10 +11,11 @@ return new class extends Migration {
     public function up(): void
     {
         // 模块表
-        Schema::create('gpa_module', function (Blueprint $table) {
+        Schema::create('gpa_modules', function (Blueprint $table) {
             $table->id('module_id')->comment('模块ID');
             $table->string('module_name', 50)->unique()->comment('模块名称/标识（对应module.json中的name，如：Base, Sms）');
-            $table->string('module_alias', 100)->nullable()->comment('模块别名（对应module.json中的alias，如：基础服务）');
+            $table->string('module_alias', 100)->nullable()->comment('模块别名（对应module.json中的alias，如：base, sms）');
+            $table->string('module_title', 100)->nullable()->comment('模块标题（对应module.json中的title，如：基础服务、短信服务）');
             $table->text('module_desc')->nullable()->comment('模块描述（对应module.json中的description）');
             $table->string('module_icon', 100)->nullable()->comment('模块图标名称');
             $table->string('module_version', 20)->nullable()->comment('模块版本号');
@@ -63,7 +64,7 @@ return new class extends Migration {
 
             $table->foreign('module_id')
                 ->references('module_id')
-                ->on('gpa_module')
+                ->on('gpa_modules')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
 
@@ -75,7 +76,7 @@ return new class extends Migration {
 
             $table->foreign('original_module_id')
                 ->references('module_id')
-                ->on('gpa_module')
+                ->on('gpa_modules')
                 ->onDelete('set null')
                 ->onUpdate('cascade');
 
@@ -102,6 +103,6 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::dropIfExists('gpa_module_menu');
-        Schema::dropIfExists('gpa_module');
+        Schema::dropIfExists('gpa_modules');
     }
 };

@@ -1,6 +1,7 @@
 {
     "name": "Sms",
-    "alias": "短信服务",
+    "alias": "sms",
+    "title": "短信服务",
     "description": "LaravelAPI 短信服务",
     "keywords": [],
     "priority": 0,

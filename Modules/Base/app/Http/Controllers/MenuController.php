@@ -4,19 +4,24 @@ namespace Modules\Base\Http\Controllers;
 
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Modules\Base\Enums\AccountTypeEnum;
 use Modules\Base\Enums\OperationActionEnum;
 use Modules\Base\Models\Menu;
+use Modules\Base\Models\Module;
 use Modules\Base\Models\RoleMenu;
 use Modules\Base\Models\UserRole;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
+use Siushin\Util\Traits\ParamTool;
 
 #[ControllerName('菜单管理')]
 class MenuController extends Controller
 {
+    use ParamTool;
+
     /**
      * 获取用户菜单列表
      * @return JsonResponse
@@ -208,5 +213,88 @@ class MenuController extends Controller
     {
         $params = request()->all();
         return success(Menu::getDirTree($params));
+    }
+
+    /**
+     * 移动菜单组到新模块
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::update)]
+    public function moveToModule(): JsonResponse
+    {
+        $params = request()->all();
+        self::checkEmptyParam($params, ['menu_ids', 'target_module_id']);
+
+        $menuIds = $params['menu_ids'];
+        $targetModuleId = $params['target_module_id'];
+
+        // 验证目标模块是否存在
+        $targetModule = Module::query()->find($targetModuleId);
+        if (!$targetModule) {
+            throw_exception('目标模块不存在');
+        }
+
+        // 开启事务
+        DB::beginTransaction();
+        try {
+            // 获取要移动的菜单
+            $menus = Menu::query()->whereIn('menu_id', $menuIds)->get();
+
+            foreach ($menus as $menu) {
+                // 如果是首次移动，记录原始模块ID
+                if ($menu->original_module_id === null) {
+                    $menu->original_module_id = $menu->module_id;
+                }
+                $menu->module_id = $targetModuleId;
+                $menu->save();
+            }
+
+            DB::commit();
+
+            return success([], '移动成功');
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw_exception('移动失败：' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 将菜单组移回原模块
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::update)]
+    public function moveBackToOriginal(): JsonResponse
+    {
+        $params = request()->all();
+        self::checkEmptyParam($params, ['menu_ids']);
+
+        $menuIds = $params['menu_ids'];
+
+        // 开启事务
+        DB::beginTransaction();
+        try {
+            // 获取要还原的菜单
+            $menus = Menu::query()->whereIn('menu_id', $menuIds)->get();
+
+            foreach ($menus as $menu) {
+                // 如果有原始模块ID，则还原
+                if ($menu->original_module_id !== null) {
+                    $menu->module_id = $menu->original_module_id;
+                    $menu->original_module_id = null;
+                    $menu->save();
+                }
+            }
+
+            DB::commit();
+
+            return success([], '已移回原处');
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw_exception('移回失败：' . $e->getMessage());
+        }
     }
 }

@@ -147,6 +147,7 @@ class RoleController extends Controller
                         'module_id'    => $module->module_id,
                         'module_name'  => $module->module_name,
                         'module_alias' => $module->module_alias,
+                        'module_title' => $module->module_title,
                     ],
                     'menus'  => $menuTree,
                 ];
@@ -165,6 +166,7 @@ class RoleController extends Controller
                     'module_id'    => 0,
                     'module_name'  => '未分类',
                     'module_alias' => 'uncategorized',
+                    'module_title' => '未分类',
                 ],
                 'menus'  => $menuTree,
             ]);
@@ -228,6 +230,24 @@ class RoleController extends Controller
     }
 
     /**
+     * 获取所有模块列表
+     * @return JsonResponse
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::list)]
+    public function getModuleList(): JsonResponse
+    {
+        // 获取所有已启用的模块
+        $modules = Module::query()
+            ->where('module_status', 1)
+            ->orderBy('module_priority', 'desc')
+            ->get(['module_id', 'module_name', 'module_alias', 'module_title'])
+            ->toArray();
+
+        return success($modules);
+    }
+
+    /**
      * 构建菜单树形结构
      * @param array $menus
      * @param int   $parentId
@@ -240,12 +260,13 @@ class RoleController extends Controller
         foreach ($menus as $menu) {
             if ($menu['parent_id'] == $parentId) {
                 $menuItem = [
-                    'menu_id'     => $menu['menu_id'],
-                    'menu_name'   => $menu['menu_name'],
-                    'menu_key'    => $menu['menu_key'],
-                    'menu_type'   => $menu['menu_type'],
-                    'parent_id'   => $menu['parent_id'],
-                    'is_required' => $menu['is_required'] ?? 0,
+                    'menu_id'            => $menu['menu_id'],
+                    'menu_name'          => $menu['menu_name'],
+                    'menu_key'           => $menu['menu_key'],
+                    'menu_type'          => $menu['menu_type'],
+                    'parent_id'          => $menu['parent_id'],
+                    'is_required'        => $menu['is_required'] ?? 0,
+                    'original_module_id' => $menu['original_module_id'] ?? null,
                 ];
 
                 // 递归获取子菜单

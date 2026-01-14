@@ -1,6 +1,7 @@
 {
     "name": "Base",
-    "alias": "基础服务",
+    "alias": "base",
+    "title": "基础服务",
     "description": "LaravelAPI 基础服务，勿删除！",
     "keywords": [],
     "priority": 0,

@@ -16,12 +16,13 @@ class Module extends Model
     use SoftDeletes;
 
     protected $primaryKey = 'module_id';
-    protected $table      = 'gpa_module';
+    protected $table      = 'gpa_modules';
 
     protected $fillable = [
         'module_id',
         'module_name',
         'module_alias',
+        'module_title',
         'module_desc',
         'module_icon',
         'module_version',

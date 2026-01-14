@@ -59,27 +59,29 @@ class AppController extends Controller
 
                 // 构建应用数据
                 $app = [
-                    'name'        => $moduleData['name'] ?? $moduleName,
-                    'alias'       => $moduleData['alias'] ?? $moduleName,
-                    'description' => $moduleData['description'] ?? '',
-                    'keywords'    => $moduleData['keywords'] ?? [],
-                    'priority'    => $moduleData['priority'] ?? 0,
-                    'source'      => $moduleData['source'] ?? '第三方',
-                    'enabled'     => $isEnabled,
-                    'path'        => $moduleName,
+                    'module_name'     => $moduleData['name'] ?? $moduleName,
+                    'module_alias'    => $moduleData['alias'] ?? $moduleName,
+                    'module_title'    => $moduleData['title'] ?? $moduleData['alias'] ?? $moduleName,
+                    'module_desc'     => $moduleData['description'] ?? '',
+                    'module_keywords' => $moduleData['keywords'] ?? [],
+                    'module_priority' => $moduleData['priority'] ?? 0,
+                    'module_source'   => $moduleData['source'] ?? 'third_party',
+                    'module_status'   => $isEnabled ? 1 : 0,
+                    'path'            => $moduleName,
                 ];
 
                 // 如果有搜索关键词，进行筛选
                 if (!empty($keyword)) {
                     $keywordLower = mb_strtolower($keyword, 'UTF-8');
-                    $matchAlias = mb_strpos(mb_strtolower($app['alias'], 'UTF-8'), $keywordLower) !== false;
-                    $matchName = mb_strpos(mb_strtolower($app['name'], 'UTF-8'), $keywordLower) !== false;
-                    $matchDescription = mb_strpos(mb_strtolower($app['description'], 'UTF-8'), $keywordLower) !== false;
+                    $matchAlias = mb_strpos(mb_strtolower($app['module_alias'], 'UTF-8'), $keywordLower) !== false;
+                    $matchTitle = mb_strpos(mb_strtolower($app['module_title'], 'UTF-8'), $keywordLower) !== false;
+                    $matchName = mb_strpos(mb_strtolower($app['module_name'], 'UTF-8'), $keywordLower) !== false;
+                    $matchDescription = mb_strpos(mb_strtolower($app['module_desc'], 'UTF-8'), $keywordLower) !== false;
                     $matchKeywords = false;
 
                     // 检查关键词数组
-                    if (is_array($app['keywords'])) {
-                        foreach ($app['keywords'] as $kw) {
+                    if (is_array($app['module_keywords'])) {
+                        foreach ($app['module_keywords'] as $kw) {
                             if (mb_strpos(mb_strtolower($kw, 'UTF-8'), $keywordLower) !== false) {
                                 $matchKeywords = true;
                                 break;
@@ -88,7 +90,7 @@ class AppController extends Controller
                     }
 
                     // 如果都不匹配，跳过该应用
-                    if (!$matchAlias && !$matchName && !$matchDescription && !$matchKeywords) {
+                    if (!$matchAlias && !$matchTitle && !$matchName && !$matchDescription && !$matchKeywords) {
                         continue;
                     }
                 }
@@ -102,7 +104,7 @@ class AppController extends Controller
 
         // 按 priority 排序，priority 越大越靠前
         usort($apps, function ($a, $b) {
-            return ($b['priority'] ?? 0) <=> ($a['priority'] ?? 0);
+            return ($b['module_priority'] ?? 0) <=> ($a['module_priority'] ?? 0);
         });
 
         return success($apps, '获取应用列表成功');

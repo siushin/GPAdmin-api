@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Modules\Base\Enums\OperationActionEnum;
+use Modules\Base\Models\Module as ModuleModel;
 use Nwidart\Modules\Facades\Module;
 use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
@@ -108,5 +109,42 @@ class AppController extends Controller
         });
 
         return success($apps, '获取应用列表成功');
+    }
+
+    /**
+     * 更新本地模块
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::update)]
+    public function updateModules(Request $request): JsonResponse
+    {
+        $modulePath = $request->input('module_path', null);
+        
+        // 如果提供了空字符串，转换为 null（表示扫描所有模块）
+        if ($modulePath === '') {
+            $modulePath = null;
+        }
+
+        try {
+            $result = ModuleModel::scanAndUpdateModules($modulePath);
+
+            $message = '更新模块成功';
+            if (!empty($result['success'])) {
+                $message .= '，成功更新 ' . count($result['success']) . ' 个模块';
+            }
+            if (!empty($result['failed'])) {
+                $message .= '，失败 ' . count($result['failed']) . ' 个模块';
+            }
+
+            return success([
+                'success' => $result['success'],
+                'failed'  => $result['failed'],
+            ], $message);
+        } catch (Exception $e) {
+            return error('更新模块失败: ' . $e->getMessage());
+        }
     }
 }

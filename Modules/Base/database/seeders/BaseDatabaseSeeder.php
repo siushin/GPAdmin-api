@@ -16,6 +16,7 @@ class BaseDatabaseSeeder extends Seeder
             DictionarySeeder::class,
             OrganizationSeeder::class,
             AccountSeeder::class,
+            ModuleSeeder::class,
             MenuSeeder::class,
             RbacSeeder::class,
             // LogSeeder::class,

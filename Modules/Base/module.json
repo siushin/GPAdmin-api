@@ -9,5 +9,18 @@
     "providers": [
         "Modules\\Base\\Providers\\BaseServiceProvider"
     ],
-    "files": []
+    "files": [],
+    "extra": {
+        "meta": {
+            "module_icon": "",
+            "module_version": "1.0.0",
+            "module_status": 1,
+            "module_is_core": 1,
+            "module_is_installed": 1,
+            "module_author": "siushin",
+            "module_author_email": "siushin@163.com",
+            "module_homepage": "https://gpadmin.siushin.com",
+            "module_dependencies": []
+        }
+    }
 }

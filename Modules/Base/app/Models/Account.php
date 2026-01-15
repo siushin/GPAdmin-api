@@ -169,6 +169,31 @@ class Account extends Authenticatable
     }
 
     /**
+     * 账号模块关联
+     * @return HasMany
+     */
+    public function accountModules(): HasMany
+    {
+        return $this->hasMany(AccountModule::class, 'account_id', 'id');
+    }
+
+    /**
+     * 账号关联的模块（多对多）
+     * @return BelongsToMany
+     */
+    public function modules(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Module::class,
+            'gpa_account_module',
+            'account_id',
+            'module_id',
+            'id',
+            'module_id'
+        )->withTimestamps();
+    }
+
+    /**
      * Create a new factory instance for the model.
      */
     protected static function newFactory()

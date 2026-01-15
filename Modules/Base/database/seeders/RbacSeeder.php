@@ -69,37 +69,40 @@ class RbacSeeder extends Seeder
             ],
         ];
 
-        $roleIds = [];
-        foreach ($roles as $role) {
-            // 检查角色是否已存在
-            $exists = Role::query()
-                ->where('account_type', $adminType)
-                ->where('role_code', $role['role_code'])
-                ->exists();
+        // 先查询已存在的角色，获取 role_id 映射
+        $existingRoles = Role::query()
+            ->where('account_type', $adminType)
+            ->whereIn('role_code', array_column($roles, 'role_code'))
+            ->pluck('role_id', 'role_code')
+            ->toArray();
 
-            if (!$exists) {
-                $roleId = generateId();
-                Role::query()->insert([
-                    'role_id'      => $roleId,
-                    'account_type' => $adminType,
-                    'role_name'    => $role['role_name'],
-                    'role_code'    => $role['role_code'],
-                    'description'  => $role['description'],
-                    'status'       => $role['status'],
-                    'sort'         => $role['sort'],
-                    'created_at'   => $now,
-                    'updated_at'   => $now,
-                ]);
-                $roleIds[$role['role_code']] = $roleId;
-            } else {
-                // 如果已存在，获取角色ID
-                $existingRole = Role::query()
-                    ->where('account_type', $adminType)
-                    ->where('role_code', $role['role_code'])
-                    ->first();
-                $roleIds[$role['role_code']] = $existingRole->role_id;
-            }
+        // 准备 upsert 数据
+        $upsertData = [];
+        foreach ($roles as $role) {
+            // 如果角色已存在，使用已存在的 role_id；否则生成新的
+            $roleId = $existingRoles[$role['role_code']] ?? generateId();
+
+            $upsertData[] = [
+                'role_id'      => $roleId,
+                'account_type' => $adminType,
+                'role_name'    => $role['role_name'],
+                'role_code'    => $role['role_code'],
+                'description'  => $role['description'],
+                'status'       => $role['status'],
+                'sort'         => $role['sort'],
+                'created_at'   => $now,
+                'updated_at'   => $now,
+            ];
+
+            $roleIds[$role['role_code']] = $roleId;
         }
+
+        // 使用 upsert 批量插入/更新（唯一键：account_type + role_code）
+        Role::upsert(
+            $upsertData,
+            ['account_type', 'role_code'],
+            ['role_name', 'description', 'status', 'sort', 'updated_at']
+        );
 
         return $roleIds;
     }
@@ -128,37 +131,40 @@ class RbacSeeder extends Seeder
             ],
         ];
 
-        $roleIds = [];
-        foreach ($roles as $role) {
-            // 检查角色是否已存在
-            $exists = Role::query()
-                ->where('account_type', $userType)
-                ->where('role_code', $role['role_code'])
-                ->exists();
+        // 先查询已存在的角色，获取 role_id 映射
+        $existingRoles = Role::query()
+            ->where('account_type', $userType)
+            ->whereIn('role_code', array_column($roles, 'role_code'))
+            ->pluck('role_id', 'role_code')
+            ->toArray();
 
-            if (!$exists) {
-                $roleId = generateId();
-                Role::query()->insert([
-                    'role_id'      => $roleId,
-                    'account_type' => $userType,
-                    'role_name'    => $role['role_name'],
-                    'role_code'    => $role['role_code'],
-                    'description'  => $role['description'],
-                    'status'       => $role['status'],
-                    'sort'         => $role['sort'],
-                    'created_at'   => $now,
-                    'updated_at'   => $now,
-                ]);
-                $roleIds[$role['role_code']] = $roleId;
-            } else {
-                // 如果已存在，获取角色ID
-                $existingRole = Role::query()
-                    ->where('account_type', $userType)
-                    ->where('role_code', $role['role_code'])
-                    ->first();
-                $roleIds[$role['role_code']] = $existingRole->role_id;
-            }
+        // 准备 upsert 数据
+        $upsertData = [];
+        foreach ($roles as $role) {
+            // 如果角色已存在，使用已存在的 role_id；否则生成新的
+            $roleId = $existingRoles[$role['role_code']] ?? generateId();
+
+            $upsertData[] = [
+                'role_id'      => $roleId,
+                'account_type' => $userType,
+                'role_name'    => $role['role_name'],
+                'role_code'    => $role['role_code'],
+                'description'  => $role['description'],
+                'status'       => $role['status'],
+                'sort'         => $role['sort'],
+                'created_at'   => $now,
+                'updated_at'   => $now,
+            ];
+
+            $roleIds[$role['role_code']] = $roleId;
         }
+
+        // 使用 upsert 批量插入/更新（唯一键：account_type + role_code）
+        Role::upsert(
+            $upsertData,
+            ['account_type', 'role_code'],
+            ['role_name', 'description', 'status', 'sort', 'updated_at']
+        );
 
         return $roleIds;
     }
@@ -239,27 +245,35 @@ class RbacSeeder extends Seeder
      */
     private function assignMenusToRole($roleId, $menus, $now): void
     {
+        // 先查询已存在的关联
+        $existingMenus = RoleMenu::query()
+            ->where('role_id', $roleId)
+            ->whereIn('menu_id', $menus->pluck('menu_id')->toArray())
+            ->pluck('id', 'menu_id')
+            ->toArray();
+
+        // 准备 upsert 数据
         $roleMenuData = [];
         foreach ($menus as $menu) {
-            // 检查是否已存在关联
-            $exists = RoleMenu::query()
-                ->where('role_id', $roleId)
-                ->where('menu_id', $menu->menu_id)
-                ->exists();
+            // 如果关联已存在，使用已存在的 id；否则生成新的
+            $id = $existingMenus[$menu->menu_id] ?? generateId();
 
-            if (!$exists) {
-                $roleMenuData[] = [
-                    'id'         => generateId(),
-                    'role_id'    => $roleId,
-                    'menu_id'    => $menu->menu_id,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ];
-            }
+            $roleMenuData[] = [
+                'id'         => $id,
+                'role_id'    => $roleId,
+                'menu_id'    => $menu->menu_id,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
         }
 
         if (!empty($roleMenuData)) {
-            RoleMenu::query()->insert($roleMenuData);
+            // 使用 upsert 批量插入/更新（唯一键：role_id + menu_id）
+            RoleMenu::upsert(
+                $roleMenuData,
+                ['role_id', 'menu_id'],
+                ['updated_at'] // 如果记录已存在，只更新 updated_at
+            );
         }
     }
 
@@ -317,21 +331,27 @@ class RbacSeeder extends Seeder
      */
     private function assignRoleToAccount($accountId, $roleId, $now): void
     {
-        // 检查是否已存在关联
-        $exists = UserRole::query()
+        // 先查询已存在的关联，获取 id
+        $existingRelation = UserRole::query()
             ->where('account_id', $accountId)
             ->where('role_id', $roleId)
-            ->exists();
+            ->first();
 
-        if (!$exists) {
-            UserRole::query()->insert([
-                'id'         => generateId(),
+        // 如果关联已存在，使用已存在的 id；否则生成新的
+        $id = $existingRelation?->id ?? generateId();
+
+        // 使用 upsert 插入/更新（唯一键：account_id + role_id）
+        UserRole::upsert(
+            [
+                'id'         => $id,
                 'account_id' => $accountId,
                 'role_id'    => $roleId,
                 'created_at' => $now,
                 'updated_at' => $now,
-            ]);
-        }
+            ],
+            ['account_id', 'role_id'],
+            ['updated_at'] // 如果记录已存在，只更新 updated_at
+        );
     }
 }
 

@@ -2,6 +2,7 @@
 
 namespace Modules\Base\Models;
 
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -105,6 +106,30 @@ class Module extends Model
     public function moduleMenus(): HasMany
     {
         return $this->hasMany(ModuleMenu::class, 'module_id', 'module_id');
+    }
+
+    /**
+     * 获取账号模块关联记录
+     */
+    public function accountModules(): HasMany
+    {
+        return $this->hasMany(AccountModule::class, 'module_id', 'module_id');
+    }
+
+    /**
+     * 关联的账号（多对多）
+     * @return BelongsToMany
+     */
+    public function accounts(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Account::class,
+            'gpa_account_module',
+            'module_id',
+            'account_id',
+            'module_id',
+            'id'
+        )->withTimestamps();
     }
 
     /**
@@ -286,5 +311,85 @@ class Module extends Model
         }
 
         return $result;
+    }
+
+    /**
+     * 获取我的应用列表（基于账号模块关联表）
+     * @param array $params
+     * @return array
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    public static function getMyApps(array $params = []): array
+    {
+        // 获取当前登录用户ID
+        $accountId = currentUserId();
+        if (!$accountId) {
+            return [];
+        }
+
+        // 通过账号模块关联表查询该账号有权限的模块
+        $query = self::query()
+            ->join('gpa_account_module', 'gpa_modules.module_id', '=', 'gpa_account_module.module_id')
+            ->where('gpa_account_module.account_id', $accountId)
+            ->where('gpa_modules.module_status', 1) // 只获取已启用的模块
+            ->where('gpa_modules.module_is_installed', 1) // 只获取已安装的模块
+            ->select('gpa_modules.*');
+
+        // 关键词搜索
+        $keyword = $params['keyword'] ?? '';
+        if (!empty($keyword)) {
+            $keywordLower = mb_strtolower($keyword, 'UTF-8');
+            $query->where(function ($q) use ($keywordLower) {
+                $q->whereRaw('LOWER(gpa_modules.module_alias) LIKE ?', ["%{$keywordLower}%"])
+                    ->orWhereRaw('LOWER(gpa_modules.module_title) LIKE ?', ["%{$keywordLower}%"])
+                    ->orWhereRaw('LOWER(gpa_modules.module_name) LIKE ?', ["%{$keywordLower}%"])
+                    ->orWhereRaw('LOWER(gpa_modules.module_desc) LIKE ?', ["%{$keywordLower}%"]);
+            });
+        }
+
+        // 获取模块列表
+        $modules = $query->orderBy('gpa_modules.module_priority', 'desc')
+            ->orderBy('gpa_modules.module_id', 'asc')
+            ->get();
+
+        // 构建返回数据
+        $apps = [];
+        foreach ($modules as $module) {
+            // 检查关键词是否匹配（如果有关键词数组）
+            if (!empty($keyword)) {
+                $matchKeywords = false;
+                if (is_array($module->module_keywords)) {
+                    foreach ($module->module_keywords as $kw) {
+                        if (mb_strpos(mb_strtolower($kw, 'UTF-8'), mb_strtolower($keyword, 'UTF-8')) !== false) {
+                            $matchKeywords = true;
+                            break;
+                        }
+                    }
+                }
+                // 如果关键词数组中没有匹配的，且其他字段也不匹配，跳过
+                if (!$matchKeywords &&
+                    mb_strpos(mb_strtolower($module->module_alias, 'UTF-8'), mb_strtolower($keyword, 'UTF-8')) === false &&
+                    mb_strpos(mb_strtolower($module->module_title, 'UTF-8'), mb_strtolower($keyword, 'UTF-8')) === false &&
+                    mb_strpos(mb_strtolower($module->module_name, 'UTF-8'), mb_strtolower($keyword, 'UTF-8')) === false &&
+                    mb_strpos(mb_strtolower($module->module_desc ?? '', 'UTF-8'), mb_strtolower($keyword, 'UTF-8')) === false) {
+                    continue;
+                }
+            }
+
+            $apps[] = [
+                'module_name'     => $module->module_name,
+                'module_alias'    => $module->module_alias,
+                'module_title'    => $module->module_title,
+                'module_desc'     => $module->module_desc ?? '',
+                'module_keywords' => $module->module_keywords ?? [],
+                'module_priority' => $module->module_priority ?? 0,
+                'module_source'   => $module->module_source ?? 'third_party',
+                'module_status'   => $module->module_status ?? 0,
+                'path'            => $module->module_name,
+            ];
+        }
+
+        return $apps;
     }
 }

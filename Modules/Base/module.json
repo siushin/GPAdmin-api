@@ -3,7 +3,11 @@
     "alias": "base",
     "title": "基础服务",
     "description": "LaravelAPI 基础服务，勿删除！",
-    "keywords": [],
+    "keywords": [
+        "基础",
+        "认证",
+        "权限"
+    ],
     "priority": 0,
     "source": "官方",
     "providers": [

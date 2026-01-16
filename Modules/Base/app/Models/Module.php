@@ -378,18 +378,127 @@ class Module extends Model
             }
 
             $apps[] = [
-                'module_name'     => $module->module_name,
-                'module_alias'    => $module->module_alias,
-                'module_title'    => $module->module_title,
-                'module_desc'     => $module->module_desc ?? '',
-                'module_keywords' => $module->module_keywords ?? [],
-                'module_priority' => $module->module_priority ?? 0,
-                'module_source'   => $module->module_source ?? 'third_party',
-                'module_status'   => $module->module_status ?? 0,
-                'path'            => $module->module_name,
+                'module_id'          => $module->module_id,
+                'module_name'        => $module->module_name,
+                'module_alias'       => $module->module_alias,
+                'module_title'       => $module->module_title,
+                'module_desc'        => $module->module_desc ?? '',
+                'module_keywords'    => $module->module_keywords ?? [],
+                'module_priority'    => $module->module_priority ?? 0,
+                'module_source'      => $module->module_source ?? 'third_party',
+                'module_status'      => $module->module_status ?? 0,
+                'module_is_core'     => $module->module_is_core ?? 0,
+                'module_is_installed' => $module->module_is_installed ?? 0,
+                'path'               => $module->module_name,
             ];
         }
 
         return $apps;
+    }
+
+    /**
+     * 获取市场应用列表（所有模块，包括未安装的）
+     * @param array $params
+     * @return array
+     * @author siushin<siushin@163.com>
+     */
+    public static function getMarketApps(array $params = []): array
+    {
+        $query = self::query();
+
+        // 关键词搜索
+        $keyword = $params['keyword'] ?? '';
+        if (!empty($keyword)) {
+            $keywordLower = mb_strtolower($keyword, 'UTF-8');
+            $query->where(function ($q) use ($keywordLower) {
+                $q->whereRaw('LOWER(module_alias) LIKE ?', ["%{$keywordLower}%"])
+                    ->orWhereRaw('LOWER(module_title) LIKE ?', ["%{$keywordLower}%"])
+                    ->orWhereRaw('LOWER(module_name) LIKE ?', ["%{$keywordLower}%"])
+                    ->orWhereRaw('LOWER(module_desc) LIKE ?', ["%{$keywordLower}%"]);
+            });
+        }
+
+        // 来源筛选
+        $source = $params['source'] ?? '';
+        if (!empty($source) && is_array($source) && count($source) > 0) {
+            $query->whereIn('module_source', $source);
+        }
+
+        // 获取模块列表
+        $modules = $query->orderBy('module_priority', 'desc')
+            ->orderBy('module_id', 'asc')
+            ->get();
+
+        // 获取当前登录用户ID，用于判断是否已安装
+        $accountId = currentUserId();
+        $installedModuleIds = [];
+        if ($accountId) {
+            $installedModuleIds = \Modules\Base\Models\AccountModule::where('account_id', $accountId)
+                ->pluck('module_id')
+                ->toArray();
+        }
+
+        // 构建返回数据
+        $apps = [];
+        foreach ($modules as $module) {
+            // 检查关键词是否匹配（如果有关键词数组）
+            if (!empty($keyword)) {
+                $matchKeywords = false;
+                if (is_array($module->module_keywords)) {
+                    foreach ($module->module_keywords as $kw) {
+                        if (mb_strpos(mb_strtolower($kw, 'UTF-8'), mb_strtolower($keyword, 'UTF-8')) !== false) {
+                            $matchKeywords = true;
+                            break;
+                        }
+                    }
+                }
+                // 如果关键词数组中没有匹配的，且其他字段也不匹配，跳过
+                if (!$matchKeywords &&
+                    mb_strpos(mb_strtolower($module->module_alias ?? '', 'UTF-8'), mb_strtolower($keyword, 'UTF-8')) === false &&
+                    mb_strpos(mb_strtolower($module->module_title ?? '', 'UTF-8'), mb_strtolower($keyword, 'UTF-8')) === false &&
+                    mb_strpos(mb_strtolower($module->module_name, 'UTF-8'), mb_strtolower($keyword, 'UTF-8')) === false &&
+                    mb_strpos(mb_strtolower($module->module_desc ?? '', 'UTF-8'), mb_strtolower($keyword, 'UTF-8')) === false) {
+                    continue;
+                }
+            }
+
+            $apps[] = [
+                'module_id'          => $module->module_id,
+                'module_name'        => $module->module_name,
+                'module_alias'       => $module->module_alias ?? '',
+                'module_title'       => $module->module_title ?? '',
+                'module_desc'        => $module->module_desc ?? '',
+                'module_icon'        => $module->module_icon,
+                'module_version'     => $module->module_version,
+                'module_priority'    => $module->module_priority ?? 0,
+                'module_source'      => $module->module_source ?? 'third_party',
+                'module_status'      => $module->module_status ?? 0,
+                'module_is_core'     => $module->module_is_core ?? 0,
+                'module_is_installed' => $module->module_is_installed ?? 0,
+                'module_installed_at' => $module->module_installed_at?->format('Y-m-d H:i:s'),
+                'module_author'      => $module->module_author,
+                'module_author_email' => $module->module_author_email,
+                'module_homepage'    => $module->module_homepage,
+                'module_keywords'    => $module->module_keywords ?? [],
+                'module_providers'   => $module->module_providers ?? [],
+                'module_dependencies' => $module->module_dependencies ?? [],
+                'is_account_installed' => in_array($module->module_id, $installedModuleIds) ? 1 : 0, // 当前账号是否已安装
+            ];
+        }
+
+        return $apps;
+    }
+
+    /**
+     * 卸载模块
+     * @param int $moduleId 模块ID
+     * @return array 返回卸载结果
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    public static function uninstallModule(int $moduleId): array
+    {
+        $provider = app(\Modules\Base\Providers\ModuleUninstallProvider::class);
+        return $provider->uninstall($moduleId);
     }
 }

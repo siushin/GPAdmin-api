@@ -116,7 +116,10 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
 
     // 应用管理
     Route::post('/app/myApps', [AppController::class, 'getMyApps']);  // 获取我的应用列表
+    Route::post('/app/marketApps', [AppController::class, 'getMarketApps']);  // 获取市场应用列表（所有模块）
     Route::post('/app/updateModules', [AppController::class, 'updateModules']);  // 更新本地模块
+    Route::post('/app/installModule', [AppController::class, 'installModule']);  // 安装模块
+    Route::post('/app/uninstallModule', [AppController::class, 'uninstallModule']);  // 卸载模块
 
     // 通知管理
     // 系统通知管理

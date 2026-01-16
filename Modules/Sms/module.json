@@ -3,7 +3,11 @@
     "alias": "sms",
     "title": "短信服务",
     "description": "LaravelAPI 短信服务",
-    "keywords": [],
+    "keywords": [
+        "SMS",
+        "短信",
+        "验证码"
+    ],
     "priority": 0,
     "source": "官方",
     "providers": [

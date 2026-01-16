@@ -29,6 +29,21 @@ class AppController extends Controller
     }
 
     /**
+     * 获取市场应用列表（所有模块）
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::index)]
+    public function getMarketApps(Request $request): JsonResponse
+    {
+        $params = $request->all();
+        $apps = ModuleModel::getMarketApps($params);
+        return success($apps, '获取应用列表成功');
+    }
+
+    /**
      * 更新本地模块
      * @param Request $request
      * @return JsonResponse
@@ -65,5 +80,74 @@ class AppController extends Controller
             // @phpstan-ignore-next-line
             return success([], '');
         }
+    }
+
+    /**
+     * 卸载模块
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::delete)]
+    public function uninstallModule(Request $request): JsonResponse
+    {
+        $moduleId = $request->input('module_id');
+        if (empty($moduleId)) {
+            throw_exception('模块ID不能为空');
+        }
+
+        $result = ModuleModel::uninstallModule($moduleId);
+
+        return success($result, '卸载模块成功');
+    }
+
+    /**
+     * 安装模块
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::create)]
+    public function installModule(Request $request): JsonResponse
+    {
+        $moduleId = $request->input('module_id');
+        if (empty($moduleId)) {
+            throw_exception('模块ID不能为空');
+        }
+
+        // 获取当前登录用户ID
+        $accountId = currentUserId();
+        if (!$accountId) {
+            throw_exception('未登录或登录已过期');
+        }
+
+        // 检查模块是否存在
+        $module = ModuleModel::find($moduleId);
+        if (!$module) {
+            throw_exception('模块不存在');
+        }
+
+        // TODO: 后续需要完善安装逻辑，目前暂时只插入 gpa_account_module 表
+        // 检查是否已安装
+        $exists = \Modules\Base\Models\AccountModule::where('account_id', $accountId)
+            ->where('module_id', $moduleId)
+            ->exists();
+
+        if ($exists) {
+            throw_exception('该模块已安装');
+        }
+
+        // 插入账号模块关联表
+        \Modules\Base\Models\AccountModule::create([
+            'account_id' => $accountId,
+            'module_id' => $moduleId,
+        ]);
+
+        return success([
+            'module_id' => $moduleId,
+            'module_name' => $module->module_name,
+        ], '安装模块成功');
     }
 }

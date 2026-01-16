@@ -43,7 +43,7 @@ return new class extends Migration {
             $table->string('menu_type', 20)->default('menu')->comment($menuTypeComment);
             $table->unsignedBigInteger('parent_id')->default(0)->comment('父菜单ID, 0表示顶级菜单');
             $table->string('account_type', 20)->default(AccountTypeEnum::Admin->value)->comment($accountTypeComment);
-            $table->unsignedBigInteger('module_id')->nullable()->comment('所属模块ID（固定不变）');
+            $table->unsignedBigInteger('module_id')->comment('所属模块ID（固定不变）');
             $table->string('menu_name', 50)->comment('菜单名称');
             $table->string('menu_key', 100)->nullable()->comment('菜单名称key（用于国际化，如：dashboard.workplace）');
             $table->string('menu_path', 200)->nullable()->comment('路由路径');

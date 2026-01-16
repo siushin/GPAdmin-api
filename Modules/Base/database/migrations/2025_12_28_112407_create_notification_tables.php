@@ -121,7 +121,7 @@ return new class extends Migration {
             $table->id()->comment('查看记录ID');
             $table->string('read_type', 50)->comment($readTypeComment);
             $table->unsignedBigInteger('target_id')->comment('目标ID（根据read_type指向不同的表：系统通知ID、站内信ID、公告ID）');
-            $table->unsignedBigInteger('account_id')->comment('查看人账号ID');
+            $table->unsignedBigInteger('account_id')->nullable()->comment('查看人账号ID（可为空，表示未登录用户）');
             $table->timestamp('read_at')->useCurrent()->comment('查看时间');
             $table->ipAddress('ip_address')->nullable()->comment('IP地址');
             $table->string('ip_location')->nullable()->comment('IP归属地');

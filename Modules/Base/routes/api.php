@@ -124,16 +124,19 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
     Route::post('/systemNotification/add', [SystemNotificationController::class, 'add']);
     Route::post('/systemNotification/update', [SystemNotificationController::class, 'update']);
     Route::post('/systemNotification/delete', [SystemNotificationController::class, 'delete']);
+    Route::post('/systemNotification/show', [SystemNotificationController::class, 'show']);  // 查看系统通知详情
     // 站内信管理
     Route::post('/message/index', [MessageController::class, 'index']);
     Route::post('/message/add', [MessageController::class, 'add']);
     Route::post('/message/update', [MessageController::class, 'update']);
     Route::post('/message/delete', [MessageController::class, 'delete']);
+    Route::post('/message/show', [MessageController::class, 'show']);  // 查看站内信详情
     // 公告管理
     Route::post('/announcement/index', [AnnouncementController::class, 'index']);
     Route::post('/announcement/add', [AnnouncementController::class, 'add']);
     Route::post('/announcement/update', [AnnouncementController::class, 'update']);
     Route::post('/announcement/delete', [AnnouncementController::class, 'delete']);
+    Route::post('/announcement/show', [AnnouncementController::class, 'show']);  // 查看公告详情
     // 通知查看记录管理
     Route::post('/notificationRead/index', [NotificationReadController::class, 'index']);
 

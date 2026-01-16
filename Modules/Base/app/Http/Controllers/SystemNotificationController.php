@@ -4,7 +4,9 @@ namespace Modules\Base\Http\Controllers;
 
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Modules\Base\Enums\NotificationReadTypeEnum;
 use Modules\Base\Enums\OperationActionEnum;
+use Modules\Base\Models\NotificationRead;
 use Modules\Base\Models\SystemNotification;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -67,6 +69,42 @@ class SystemNotificationController extends Controller
     {
         $params = trimParam(request()->only(['id']));
         return success(SystemNotification::deleteSystemNotification($params));
+    }
+
+    /**
+     * 查看系统通知详情
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    public function show(): JsonResponse
+    {
+        $params = trimParam(request()->only(['id']));
+        if (empty($params['id'])) {
+            throw_exception('缺少 id 参数');
+        }
+
+        $id = $params['id'];
+        $notification = SystemNotification::query()->find($id);
+        if (!$notification) {
+            throw_exception('系统通知不存在');
+        }
+
+        // 记录查看记录（需要记录登录人信息）
+        $request = request();
+        $accountId = currentUserId(); // 如果用户已登录，获取账号ID；否则为 null
+        $ipAddress = $request->ip();
+        $ipLocation = getIpLocation($ipAddress);
+
+        NotificationRead::recordRead(
+            NotificationReadTypeEnum::SystemNotification->value,
+            $id,
+            $accountId,
+            $ipAddress,
+            $ipLocation
+        );
+
+        return success($notification->toArray());
     }
 }
 

@@ -90,6 +90,63 @@ class NotificationRead extends Model
     }
 
     /**
+     * 记录查看记录
+     * @param string $readType 查看类型（system_notification, message, announcement）
+     * @param int $targetId 目标ID
+     * @param int|null $accountId 账号ID（可为空，表示未登录用户）
+     * @param string|null $ipAddress IP地址
+     * @param string|null $ipLocation IP归属地
+     * @return bool
+     * @author siushin<siushin@163.com>
+     */
+    public static function recordRead(
+        string $readType,
+        int $targetId,
+        ?int $accountId = null,
+        ?string $ipAddress = null,
+        ?string $ipLocation = null
+    ): bool {
+        try {
+            // 如果提供了 account_id，检查是否已存在记录（避免重复记录）
+            if ($accountId) {
+                $exists = self::query()
+                    ->where('read_type', $readType)
+                    ->where('target_id', $targetId)
+                    ->where('account_id', $accountId)
+                    ->exists();
+                
+                if ($exists) {
+                    // 如果已存在，更新查看时间和IP信息
+                    return self::query()
+                        ->where('read_type', $readType)
+                        ->where('target_id', $targetId)
+                        ->where('account_id', $accountId)
+                        ->update([
+                            'read_at' => now(),
+                            'ip_address' => $ipAddress,
+                            'ip_location' => $ipLocation,
+                        ]);
+                }
+            }
+            // 如果 account_id 为 null（未登录用户），每次都创建新记录
+            // 因为无法区分不同的未登录用户，所以允许重复记录
+
+            // 创建新记录
+            return self::query()->insert([
+                'read_type' => $readType,
+                'target_id' => $targetId,
+                'account_id' => $accountId,
+                'read_at' => now(),
+                'ip_address' => $ipAddress,
+                'ip_location' => $ipLocation,
+            ]);
+        } catch (Exception $e) {
+            \Log::error('记录查看记录失败: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * 关联账号
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */

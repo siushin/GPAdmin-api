@@ -67,7 +67,7 @@ class Message extends Model
             unset($params['target_platform']);
         }
 
-        return self::fastGetPageData($query, $params, [
+        $data = self::fastGetPageData($query, $params, [
             'title'           => 'like',
             'status'          => '=',
             'sender_id'       => '=',
@@ -75,6 +75,53 @@ class Message extends Model
             'date_range'      => 'created_at',
             'time_range'      => 'created_at',
         ]);
+
+        // 关联发送者和接收者的账号信息
+        $accountIds = array_values(array_unique(array_filter(
+            array_merge(
+                array_column($data['data'], 'sender_id'),
+                array_column($data['data'], 'receiver_id')
+            )
+        )));
+        
+        if (!empty($accountIds)) {
+            $accounts = Account::query()
+                ->whereIn('id', $accountIds)
+                ->with('profile')
+                ->select(['id', 'username'])
+                ->get()
+                ->keyBy('id')
+                ->toArray();
+
+            foreach ($data['data'] as &$item) {
+                // 处理发送者信息
+                if (!empty($item['sender_id']) && isset($accounts[$item['sender_id']])) {
+                    $account = $accounts[$item['sender_id']];
+                    $nickname = $account['profile']['nickname'] ?? '';
+                    $username = $account['username'];
+                    $item['sender_name'] = $nickname ? "{$nickname}({$username})" : $username;
+                } else {
+                    $item['sender_name'] = '';
+                }
+
+                // 处理接收者信息
+                if (!empty($item['receiver_id']) && isset($accounts[$item['receiver_id']])) {
+                    $account = $accounts[$item['receiver_id']];
+                    $nickname = $account['profile']['nickname'] ?? '';
+                    $username = $account['username'];
+                    $item['receiver_name'] = $nickname ? "{$nickname}({$username})" : $username;
+                } else {
+                    $item['receiver_name'] = '';
+                }
+            }
+        } else {
+            foreach ($data['data'] as &$item) {
+                $item['sender_name'] = '';
+                $item['receiver_name'] = '';
+            }
+        }
+
+        return $data;
     }
 
     /**

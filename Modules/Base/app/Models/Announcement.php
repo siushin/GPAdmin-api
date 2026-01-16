@@ -283,5 +283,37 @@ class Announcement extends Model
 
         return [];
     }
+
+    /**
+     * 获取搜索框数据：公告列表
+     * @return array
+     * @author siushin<siushin@163.com>
+     */
+    public static function getAnnouncementListSearchData(): array
+    {
+        // 获取所有非软删除的 position 字段，去重并过滤空值
+        $positions = self::query()
+            ->whereNotNull('position')
+            ->where('position', '!=', '')
+            ->distinct()
+            ->orderBy('position')
+            ->pluck('position')
+            ->filter()
+            ->values()
+            ->toArray();
+
+        // 转换为 label-value 格式
+        $positionList = [];
+        foreach ($positions as $position) {
+            $positionList[] = [
+                'label' => $position,
+                'value' => $position,
+            ];
+        }
+
+        return [
+            'position' => $positionList,
+        ];
+    }
 }
 

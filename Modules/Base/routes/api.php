@@ -135,6 +135,7 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
     Route::post('/message/delete', [MessageController::class, 'delete']);
     Route::post('/message/show', [MessageController::class, 'show']);  // 查看站内信详情
     // 公告管理
+    Route::post('/announcement/getAnnouncementListSearchData', [AnnouncementController::class, 'getAnnouncementListSearchData']);  // 获取公告列表搜索数据
     Route::post('/announcement/index', [AnnouncementController::class, 'index']);
     Route::post('/announcement/add', [AnnouncementController::class, 'add']);
     Route::post('/announcement/update', [AnnouncementController::class, 'update']);

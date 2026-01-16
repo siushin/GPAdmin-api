@@ -16,6 +16,20 @@ use Siushin\LaravelTool\Attributes\OperationAction;
 #[ControllerName('通知管理')]
 class AnnouncementController extends Controller
 {
+
+    /**
+     * 获取搜索框数据：公告列表
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::paramData)]
+    public function getAnnouncementListSearchData(): JsonResponse
+    {
+        $data = Announcement::getAnnouncementListSearchData();
+        return success($data);
+    }
+    
     /**
      * 获取公告列表
      * @return JsonResponse

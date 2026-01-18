@@ -1,0 +1,4 @@
+menu_type,parent_key,menu_name,menu_key,menu_path,menu_icon,component,redirect,sort,is_required,status
+dir,,短信管理,sms,/sms,MessageOutlined,,/sms/log,8,0,1
+menu,sms,短信发送记录,sms.log,/sms/log,FileTextOutlined,./Sms/Log,,1,0,1
+

@@ -16,7 +16,7 @@
     "files": [],
     "extra": {
         "meta": {
-            "module_icon": "",
+            "module_icon": "MessageOutlined",
             "module_version": "0.0.1",
             "module_status": 1,
             "module_is_core": 0,

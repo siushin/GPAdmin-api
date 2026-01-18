@@ -16,7 +16,7 @@
     "files": [],
     "extra": {
         "meta": {
-            "module_icon": "",
+            "module_icon": "DeploymentUnitOutlined",
             "module_version": "1.0.0",
             "module_status": 1,
             "module_is_core": 1,

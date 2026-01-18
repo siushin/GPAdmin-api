@@ -225,7 +225,7 @@ php artisan make:enum OrganizationTypeEnum
 
 ## 🧑🏻‍💻 关于作者
 
-十年开发经验，具有丰富的前、后端软件开发经验~
+多年开发经验，具有丰富的前、后端软件开发经验~
 
 👤 作者：<https://github.com/siushin>
 

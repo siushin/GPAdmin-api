@@ -1,0 +1,3 @@
+[submodule "Modules/Sms"]
+	path = Modules/Sms
+	url = git@github.com:siushin/gpa-module-sms.git

@@ -103,6 +103,7 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
     Route::post('/menu/delete', [MenuController::class, 'delete']);
     Route::post('/menu/tree', [MenuController::class, 'tree']);
     Route::post('/menu/dirTree', [MenuController::class, 'dirTree']);
+    Route::post('/menu/getMenuListSearchData', [MenuController::class, 'getMenuListSearchData']);  // 菜单列表搜索数据
 
     // 日志管理
     Route::post('/log/generalLog', [LogController::class, 'generalLog']);  // 常规日志列表

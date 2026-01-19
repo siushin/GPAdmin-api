@@ -80,8 +80,9 @@ class Menu extends Model
             throw_exception('账号类型无效');
         }
 
-        return self::fastGetPageData(self::query(), $params, [
+        $data = self::fastGetPageData(self::query(), $params, [
             'account_type' => '=',
+            'module_id'    => '=',
             'parent_id'    => '=',
             'menu_name'    => 'like',
             'menu_key'     => 'like',
@@ -90,6 +91,32 @@ class Menu extends Model
             'status'       => '=',
             'date_range'   => 'created_at',
         ]);
+
+        // 关联模块信息
+        $moduleIds = array_values(array_unique(array_filter(array_column($data['data'], 'module_id'))));
+        if (!empty($moduleIds)) {
+            $modules = Module::query()
+                ->whereIn('module_id', $moduleIds)
+                ->select(['module_id', 'module_name', 'module_title'])
+                ->get()
+                ->keyBy('module_id')
+                ->toArray();
+
+            foreach ($data['data'] as &$item) {
+                if (isset($modules[$item['module_id']])) {
+                    $module = $modules[$item['module_id']];
+                    $item['module_name'] = $module['module_title'] ?: $module['module_name'];
+                } else {
+                    $item['module_name'] = '';
+                }
+            }
+        } else {
+            foreach ($data['data'] as &$item) {
+                $item['module_name'] = '';
+            }
+        }
+
+        return $data;
     }
 
     /**
@@ -119,22 +146,41 @@ class Menu extends Model
             ->get()
             ->toArray();
 
-        return self::buildMenuTree($menus);
+        // 根据 menu_id 去重，保留第一次出现的项
+        $uniqueMenus = [];
+        $seenIds = [];
+        foreach ($menus as $menu) {
+            if (!in_array($menu['menu_id'], $seenIds)) {
+                $uniqueMenus[] = $menu;
+                $seenIds[] = $menu['menu_id'];
+            }
+        }
+
+        return self::buildMenuTree($uniqueMenus);
     }
 
     /**
      * 构建菜单树形结构
      * @param array $menus
      * @param int   $parentId
+     * @param array $processedIds 已处理的菜单ID，用于防止重复
      * @return array
      * @author siushin<siushin@163.com>
      */
-    private static function buildMenuTree(array $menus, int $parentId = 0): array
+    private static function buildMenuTree(array $menus, int $parentId = 0, array &$processedIds = []): array
     {
         $tree = [];
 
         foreach ($menus as $menu) {
+            // 检查是否已处理过该菜单项，防止重复
+            if (in_array($menu['menu_id'], $processedIds)) {
+                continue;
+            }
+
             if ($menu['parent_id'] == $parentId) {
+                // 标记为已处理
+                $processedIds[] = $menu['menu_id'];
+
                 $menuItem = [
                     'menu_id'      => $menu['menu_id'],
                     'menu_name'    => $menu['menu_name'],
@@ -152,7 +198,7 @@ class Menu extends Model
                 ];
 
                 // 递归获取子菜单
-                $children = self::buildMenuTree($menus, $menu['menu_id']);
+                $children = self::buildMenuTree($menus, $menu['menu_id'], $processedIds);
                 if (!empty($children)) {
                     $menuItem['children'] = $children;
                 }
@@ -205,9 +251,18 @@ class Menu extends Model
             $exist && throw_exception('该账号类型下路由路径已存在');
         }
 
+        // 如果 menu_key 不为空，检查同一账号类型下 menu_key 是否唯一
+        if (!empty($params['menu_key'])) {
+            $exist = self::query()
+                ->where('account_type', $account_type)
+                ->where('menu_key', $params['menu_key'])
+                ->exists();
+            $exist && throw_exception('该账号类型下菜单Key已存在');
+        }
+
         // 过滤允许的字段
         $allowed_fields = [
-            'account_type', 'menu_name', 'menu_key', 'menu_path', 'menu_icon',
+            'account_type', 'module_id', 'menu_name', 'menu_key', 'menu_path', 'menu_icon',
             'menu_type', 'parent_id', 'component', 'redirect', 'is_required', 'status', 'sort'
         ];
         $create_data = self::getArrayByKeys($params, $allowed_fields);
@@ -321,6 +376,19 @@ class Menu extends Model
                 ->where('menu_id', '<>', $menu_id)
                 ->exists();
             $exist && throw_exception('该账号类型下路由路径已存在，更新失败');
+        }
+
+        // 如果 menu_key 发生变化，检查唯一性约束
+        if (array_key_exists('menu_key', $update_data)) {
+            $check_menu_key = $update_data['menu_key'];
+            if (!empty($check_menu_key)) {
+                $exist = self::query()
+                    ->where('account_type', $account_type)
+                    ->where('menu_key', $check_menu_key)
+                    ->where('menu_id', '<>', $menu_id)
+                    ->exists();
+                $exist && throw_exception('该账号类型下菜单Key已存在，更新失败');
+            }
         }
 
         $bool = $info->update($update_data);

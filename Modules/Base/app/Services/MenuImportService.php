@@ -135,8 +135,17 @@ class MenuImportService
         string $accountType,
         ?Command $command = null
     ): int {
+        // 获取所有 menu_key 列表
+        $menuKeys = array_column($menus, 'menu_key');
+
+        // 预先查询数据库中已存在的菜单（根据 account_type 和 menu_key）
+        $existingMenus = Menu::where('account_type', $accountType)
+            ->whereIn('menu_key', $menuKeys)
+            ->pluck('menu_id', 'menu_key')
+            ->toArray();
+
         // 存储菜单 ID 映射（menu_key => menu_id）
-        $menuIdMap = [];
+        $menuIdMap = $existingMenus; // 先用已存在的菜单初始化
         $importedCount = 0;
 
         // 按层级处理菜单：先处理顶级菜单，然后逐层处理子菜单
@@ -146,7 +155,8 @@ class MenuImportService
         // 第一轮：处理顶级菜单（parent_key 为空）
         $topLevelMenus = array_filter($remainingMenus, fn($menu) => empty($menu['parent_key']));
         foreach ($topLevelMenus as $menu) {
-            $menuId = generateId();
+            // 如果已存在则使用已有的 menu_id，否则生成新的
+            $menuId = $existingMenus[$menu['menu_key']] ?? generateId();
             $menuIdMap[$menu['menu_key']] = $menuId;
             $processedKeys[] = $menu['menu_key'];
 
@@ -188,7 +198,8 @@ class MenuImportService
 
                 // 如果父菜单已处理，则处理当前菜单
                 if (isset($menuIdMap[$parentKey])) {
-                    $menuId = generateId();
+                    // 如果已存在则使用已有的 menu_id，否则生成新的
+                    $menuId = $existingMenus[$menu['menu_key']] ?? generateId();
                     $menuIdMap[$menu['menu_key']] = $menuId;
                     $parentId = $menuIdMap[$parentKey];
 

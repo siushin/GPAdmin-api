@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Modules\Base\Enums\LogActionEnum;
+use Modules\Base\Enums\ModulePullTypeEnum;
 use Modules\Base\Models\AccountModule;
 use Modules\Base\Models\Menu;
 use Modules\Base\Models\Module;
@@ -47,8 +48,8 @@ class ModuleUninstallProvider
             // 2. 移除菜单数据
             $this->removeMenus($moduleId);
 
-            // 3. 移除模块目录下的代码
-            $this->removeModuleDirectory($modulePath, $moduleName);
+            // 3. 移除模块目录下的代码（传入 module 对象以判断类型）
+            $this->removeModuleDirectory($modulePath, $moduleName, $module);
 
             // 4. 更新模块状态
             $module->update([
@@ -100,10 +101,11 @@ class ModuleUninstallProvider
      * 移除模块目录
      * @param string $modulePath 模块路径
      * @param string $moduleName 模块名称
+     * @param Module $module 模块模型
      * @return void
      * @throws Exception
      */
-    private function removeModuleDirectory(string $modulePath, string $moduleName): void
+    private function removeModuleDirectory(string $modulePath, string $moduleName, Module $module): void
     {
         // 检查模块目录是否存在
         if (!File::exists($modulePath)) {
@@ -130,12 +132,152 @@ class ModuleUninstallProvider
             throw_exception('模块路径不在 Modules 目录下，拒绝删除');
         }
 
-        // 删除模块目录
-        try {
-            File::deleteDirectory($modulePath);
-        } catch (Exception $e) {
-            throw_exception('删除模块目录失败: ' . $e->getMessage());
+        // 根据模块拉取类型选择不同的卸载方式
+        $pullType = $module->module_pull_type;
+        if ($pullType === ModulePullTypeEnum::GIT->value) {
+            // Git 子模块：使用 Git 命令正确卸载
+            $this->removeGitSubmodule($modulePath, $moduleName);
+        } else {
+            // URL 下载或其他方式：直接删除目录
+            try {
+                File::deleteDirectory($modulePath);
+            } catch (Exception $e) {
+                throw_exception('删除模块目录失败: ' . $e->getMessage());
+            }
         }
+    }
+
+    /**
+     * 移除 Git 子模块
+     * @param string $modulePath 模块路径
+     * @param string $moduleName 模块名称
+     * @return void
+     * @throws Exception
+     */
+    private function removeGitSubmodule(string $modulePath, string $moduleName): void
+    {
+        $gitPath      = $this->findGitCommand();
+        $relativePath = str_replace(base_path() . DIRECTORY_SEPARATOR, '', $modulePath);
+
+        // 步骤1: 取消子模块初始化 (git submodule deinit)
+        // 这会移除工作目录中的文件，但保留 .gitmodules 配置
+        $deinitCommand = sprintf(
+            '%s submodule deinit -f -- %s',
+            escapeshellarg($gitPath),
+            escapeshellarg($relativePath)
+        );
+
+        $output    = [];
+        $returnVar = 0;
+        exec($deinitCommand . ' 2>&1', $output, $returnVar);
+
+        // deinit 可能因为目录不存在而失败，这是正常的，继续执行
+
+        // 步骤2: 从 .gitmodules 和索引中移除子模块 (git submodule rm)
+        // 这会自动删除 .gitmodules 中的对应条目，并从 Git 索引中移除
+        $rmCommand = sprintf(
+            '%s submodule rm -f -- %s',
+            escapeshellarg($gitPath),
+            escapeshellarg($relativePath)
+        );
+
+        exec($rmCommand . ' 2>&1', $output, $returnVar);
+
+        if ($returnVar !== 0) {
+            // 如果 rm 失败，可能是子模块未正确配置，手动处理
+            $this->removeGitSubmoduleManually($relativePath);
+        }
+
+        // 步骤3: 删除模块目录（如果还存在）
+        if (File::exists($modulePath)) {
+            try {
+                File::deleteDirectory($modulePath);
+            } catch (Exception $e) {
+                // 记录警告，但不抛出异常，因为 Git 命令已经处理了子模块配置
+                logGeneral(
+                    LogActionEnum::delete->name,
+                    "删除 Git 子模块目录失败: {$e->getMessage()}",
+                    ['module_name' => $moduleName, 'module_path' => $modulePath]
+                );
+            }
+        }
+
+        // 步骤4: 删除 .git/modules 中的子模块缓存（如果存在）
+        $gitModulesPath = base_path('.git' . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . str_replace('/', '_', $relativePath));
+        if (File::exists($gitModulesPath)) {
+            try {
+                File::deleteDirectory($gitModulesPath);
+            } catch (Exception $e) {
+                // 记录警告但不抛出异常
+                logGeneral(
+                    LogActionEnum::delete->name,
+                    "删除 Git 子模块缓存失败: {$e->getMessage()}",
+                    ['module_name' => $moduleName, 'cache_path' => $gitModulesPath]
+                );
+            }
+        }
+    }
+
+    /**
+     * 手动移除 Git 子模块（当 git submodule rm 失败时使用）
+     * @param string $relativePath 相对路径
+     * @return void
+     * @throws Exception
+     */
+    private function removeGitSubmoduleManually(string $relativePath): void
+    {
+        // 手动从 .gitmodules 文件中移除对应条目
+        $gitmodulesPath = base_path('.gitmodules');
+        if (File::exists($gitmodulesPath)) {
+            $content = File::get($gitmodulesPath);
+
+            // 使用正则表达式移除对应的子模块配置块
+            $pattern = '/\[submodule\s+"' . preg_quote($relativePath, '/') . '"\][^\[]*/s';
+            $content = preg_replace($pattern, '', $content);
+
+            // 清理多余的空白行
+            $content = preg_replace('/\n{3,}/', "\n\n", $content);
+            $content = trim($content) . "\n";
+
+            File::put($gitmodulesPath, $content);
+        }
+
+        // 从 Git 索引中移除（如果还在的话）
+        $gitPath         = $this->findGitCommand();
+        $rmCacheCommand  = sprintf(
+            '%s rm --cached -r -- %s 2>&1',
+            escapeshellarg($gitPath),
+            escapeshellarg($relativePath)
+        );
+
+        exec($rmCacheCommand, $output, $returnVar);
+        // 忽略返回值，因为可能已经不存在了
+    }
+
+    /**
+     * 查找 git 命令路径
+     * @return string
+     * @throws Exception
+     */
+    private function findGitCommand(): string
+    {
+        $commands = ['git', '/usr/bin/git', '/usr/local/bin/git'];
+        $gitPath  = null;
+
+        foreach ($commands as $cmd) {
+            $output    = [];
+            exec(escapeshellarg($cmd) . ' --version 2>&1', $output, $returnVar);
+            if ($returnVar === 0) {
+                $gitPath = $cmd;
+                break;
+            }
+        }
+
+        if ($gitPath === null) {
+            throw_exception('未找到 git 命令，请确保系统已安装 git');
+        }
+
+        return $gitPath;
     }
 
     /**

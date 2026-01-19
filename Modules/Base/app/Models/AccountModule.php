@@ -16,6 +16,7 @@ class AccountModule extends Model
         'id',
         'account_id',
         'module_id',
+        'sort',
     ];
 
     /**

@@ -3,6 +3,7 @@
 namespace Modules\Base\Logics;
 
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Modules\Base\Enums\AccountTypeEnum;
 use Modules\Base\Models\Menu;
 use Modules\Base\Models\Module;
@@ -33,32 +34,33 @@ class MenuLogic
         $isSuperAdmin = $user->account_type === AccountTypeEnum::Admin
             && $user->adminInfo?->is_super == 1;
 
-        // 1. 获取用户模块列表
+        // 1. 获取用户模块列表，统一按 sort 升序排序
         if ($isSuperAdmin) {
-            // 超级管理员获取所有启用的模块
-            $modules = Module::where('module_status', 1)
-                ->where('module_is_installed', 1)
-                ->orderBy('module_priority', 'desc')
-                ->orderBy('module_id', 'asc')
+            // 超级管理员获取所有启用的模块，使用 LEFT JOIN 获取 sort，如果没有则使用 module_priority 作为 sort
+            $modules = Module::query()
+                ->leftJoin('gpa_account_module', function ($join) use ($user) {
+                    $join->on('gpa_modules.module_id', '=', 'gpa_account_module.module_id')
+                        ->where('gpa_account_module.account_id', $user->id);
+                })
+                ->where('gpa_modules.module_status', 1)
+                ->where('gpa_modules.module_is_installed', 1)
+                ->select('gpa_modules.*', DB::raw('COALESCE(gpa_account_module.sort, gpa_modules.module_priority) as sort'))
+                ->orderBy('sort', 'asc')
+                ->orderBy('gpa_modules.module_id', 'asc')
                 ->get()
                 ->toArray();
         } else {
-            // 普通用户获取已分配的模块（去重模块ID）
-            $moduleIds = array_unique($user->modules()
-                ->where('module_status', 1)
-                ->where('module_is_installed', 1)
-                ->pluck('module_id')
-                ->toArray());
-
-            if (empty($moduleIds)) {
-                $modules = [];
-            } else {
-                $modules = Module::whereIn('module_id', $moduleIds)
-                    ->orderBy('module_priority', 'desc')
-                    ->orderBy('module_id', 'asc')
-                    ->get()
-                    ->toArray();
-            }
+            // 普通用户获取已分配的模块，关联 account_module 表按 sort 升序排序
+            $modules = Module::query()
+                ->join('gpa_account_module', 'gpa_modules.module_id', '=', 'gpa_account_module.module_id')
+                ->where('gpa_account_module.account_id', $user->id)
+                ->where('gpa_modules.module_status', 1)
+                ->where('gpa_modules.module_is_installed', 1)
+                ->select('gpa_modules.*', 'gpa_account_module.sort')
+                ->orderBy('gpa_account_module.sort', 'asc')
+                ->orderBy('gpa_modules.module_id', 'asc')
+                ->get()
+                ->toArray();
         }
 
         // 确保模块列表不重复（按 module_id 去重）
@@ -146,6 +148,18 @@ class MenuLogic
             $menusByModule[$moduleId][] = $menu;
         }
 
+        // 对每个模块下的菜单按 sort 和 menu_id 升序排序
+        foreach ($menusByModule as $moduleId => $moduleMenus) {
+            usort($menusByModule[$moduleId], function ($a, $b) {
+                $sortA = $a['sort'] ?? 0;
+                $sortB = $b['sort'] ?? 0;
+                if ($sortA != $sortB) {
+                    return $sortA <=> $sortB;
+                }
+                return ($a['menu_id'] ?? 0) <=> ($b['menu_id'] ?? 0);
+            });
+        }
+
         // 4. 组装模块菜单数据
         $result = [];
         foreach ($modules as $module) {
@@ -210,31 +224,48 @@ class MenuLogic
     {
         $tree = [];
 
+        // 筛选出当前层级的菜单
+        $currentLevelMenus = [];
         foreach ($menus as $menu) {
             if ($menu['parent_id'] == $parentId) {
-                $menuItem = [
-                    'path'      => $menu['menu_path'],
-                    'name'      => $menu['menu_key'],
-                    'title'     => $menu['menu_name'],
-                    'icon'      => $menu['menu_icon'],
-                    'component' => $menu['component'],
-                    'redirect'  => $menu['redirect'],
-                ];
-
-                // 移除null和空字符串字段（但保留false和0）
-                $filteredMenuItem = array_filter($menuItem, function ($value) {
-                    return $value !== null && $value !== '';
-                });
-                $menuItem = $filteredMenuItem;
-
-                // 递归获取子菜单
-                $children = self::buildMenuTree($menus, $menu['menu_id']);
-                if (!empty($children)) {
-                    $menuItem['routes'] = $children;
-                }
-
-                $tree[] = $menuItem;
+                $currentLevelMenus[] = $menu;
             }
+        }
+
+        // 对当前层级的菜单按 sort 和 menu_id 升序排序
+        usort($currentLevelMenus, function ($a, $b) {
+            $sortA = $a['sort'] ?? 0;
+            $sortB = $b['sort'] ?? 0;
+            if ($sortA != $sortB) {
+                return $sortA <=> $sortB;
+            }
+            return ($a['menu_id'] ?? 0) <=> ($b['menu_id'] ?? 0);
+        });
+
+        // 构建菜单树
+        foreach ($currentLevelMenus as $menu) {
+            $menuItem = [
+                'path'      => $menu['menu_path'],
+                'name'      => $menu['menu_key'],
+                'title'     => $menu['menu_name'],
+                'icon'      => $menu['menu_icon'],
+                'component' => $menu['component'],
+                'redirect'  => $menu['redirect'],
+            ];
+
+            // 移除null和空字符串字段（但保留false和0）
+            $filteredMenuItem = array_filter($menuItem, function ($value) {
+                return $value !== null && $value !== '';
+            });
+            $menuItem = $filteredMenuItem;
+
+            // 递归获取子菜单
+            $children = self::buildMenuTree($menus, $menu['menu_id']);
+            if (!empty($children)) {
+                $menuItem['routes'] = $children;
+            }
+
+            $tree[] = $menuItem;
         }
 
         return $tree;

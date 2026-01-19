@@ -121,6 +121,8 @@ Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
     Route::post('/app/updateModules', [AppController::class, 'updateModules']);  // 更新本地模块
     Route::post('/app/installModule', [AppController::class, 'installModule']);  // 安装模块
     Route::post('/app/uninstallModule', [AppController::class, 'uninstallModule']);  // 卸载模块
+    Route::post('/app/getModulesSort', [AppController::class, 'getModulesSort']);  // 获取模块排序列表
+    Route::post('/app/updateModulesSort', [AppController::class, 'updateModulesSort']);  // 更新模块排序
 
     // 通知管理
     // 系统通知管理

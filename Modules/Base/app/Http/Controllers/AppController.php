@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Base\Enums\OperationActionEnum;
+use Modules\Base\Logics\AppLogic;
 use Modules\Base\Models\Module as ModuleModel;
 use Siushin\LaravelTool\Attributes\ControllerName;
 use Siushin\LaravelTool\Attributes\OperationAction;
@@ -53,7 +54,7 @@ class AppController extends Controller
     #[OperationAction(OperationActionEnum::update)]
     public function updateModules(Request $request): JsonResponse
     {
-        $modulePath = $request->input('module_path', null);
+        $modulePath = $request->input('module_path');
 
         // 如果提供了空字符串，转换为 null（表示扫描所有模块）
         if ($modulePath === '') {
@@ -117,37 +118,38 @@ class AppController extends Controller
             throw_exception('模块ID不能为空');
         }
 
-        // 获取当前登录用户ID
-        $accountId = currentUserId();
-        if (!$accountId) {
-            throw_exception('未登录或登录已过期');
-        }
+        $result = AppLogic::installModule($moduleId);
 
-        // 检查模块是否存在
-        $module = ModuleModel::find($moduleId);
-        if (!$module) {
-            throw_exception('模块不存在');
-        }
+        return success($result, '安装模块成功');
+    }
 
-        // TODO: 后续需要完善安装逻辑，目前暂时只插入 gpa_account_module 表
-        // 检查是否已安装
-        $exists = \Modules\Base\Models\AccountModule::where('account_id', $accountId)
-            ->where('module_id', $moduleId)
-            ->exists();
+    /**
+     * 获取模块排序列表
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::index)]
+    public function getModulesSort(Request $request): JsonResponse
+    {
+        $list = AppLogic::getModulesSort();
+        return success($list, '获取模块排序列表成功');
+    }
 
-        if ($exists) {
-            throw_exception('该模块已安装');
-        }
+    /**
+     * 更新模块排序
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Exception
+     * @author siushin<siushin@163.com>
+     */
+    #[OperationAction(OperationActionEnum::update)]
+    public function updateModulesSort(Request $request): JsonResponse
+    {
+        $sortList = $request->input('sort_list', []);
+        AppLogic::updateModulesSort($sortList);
 
-        // 插入账号模块关联表
-        \Modules\Base\Models\AccountModule::create([
-            'account_id' => $accountId,
-            'module_id' => $moduleId,
-        ]);
-
-        return success([
-            'module_id' => $moduleId,
-            'module_name' => $module->module_name,
-        ], '安装模块成功');
+        return success([], '排序保存成功，请退出登录后重新登录以使排序生效');
     }
 }

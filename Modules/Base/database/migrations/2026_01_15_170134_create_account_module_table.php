@@ -21,6 +21,7 @@ return new class extends Migration {
             $table->id()->comment('关联ID');
             $table->unsignedBigInteger('account_id')->comment('账号ID');
             $table->unsignedBigInteger('module_id')->comment('模块ID');
+            $table->unsignedInteger('sort')->default(0)->comment('排序');
             $table->timestamps();
 
             // 关联账号表

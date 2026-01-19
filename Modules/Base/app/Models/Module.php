@@ -40,6 +40,8 @@ class Module extends Model
         'module_keywords',
         'module_providers',
         'module_dependencies',
+        'module_pull_type',
+        'module_pull_url',
         'uploader_id',
     ];
 
@@ -255,6 +257,8 @@ class Module extends Model
                 $moduleAuthorEmail = $meta['module_author_email'] ?? null;
                 $moduleHomepage = $meta['module_homepage'] ?? null;
                 $moduleDependencies = $meta['module_dependencies'] ?? [];
+                $modulePullType = $meta['module_pull_type'] ?? null;
+                $modulePullUrl = $meta['module_pull_url'] ?? null;
 
                 // 查找或创建模块
                 $module = self::where('module_name', $moduleName)->first();
@@ -277,6 +281,8 @@ class Module extends Model
                     'module_keywords'     => $moduleKeywords,
                     'module_providers'    => $moduleProviders,
                     'module_dependencies' => $moduleDependencies,
+                    'module_pull_type'    => $modulePullType,
+                    'module_pull_url'     => $modulePullUrl,
                 ];
 
                 if ($module) {

@@ -154,14 +154,15 @@ class MenuImportService
 
         // 第一轮：处理顶级菜单（parent_key 为空）
         $topLevelMenus = array_filter($remainingMenus, fn($menu) => empty($menu['parent_key']));
+
+        // 为顶级菜单自动分配 sort 值（目录和菜单分别计数）
+        $topLevelMenus = self::assignSortValues($topLevelMenus);
+
         foreach ($topLevelMenus as $menu) {
             // 如果已存在则使用已有的 menu_id，否则生成新的
             $menuId = $existingMenus[$menu['menu_key']] ?? generateId();
             $menuIdMap[$menu['menu_key']] = $menuId;
             $processedKeys[] = $menu['menu_key'];
-
-            // 使用 CSV 中的 sort 值，如果没有则使用默认值 0
-            $sortValue = isset($menu['sort']) && $menu['sort'] !== '' ? (int)$menu['sort'] : 0;
 
             Menu::upsert([
                 [
@@ -177,7 +178,7 @@ class MenuImportService
                     'component'      => $menu['component'] ?: null,
                     'redirect'       => $menu['redirect'] ?: null,
                     'is_required'    => (int)$menu['is_required'],
-                    'sort'           => $sortValue,
+                    'sort'           => $menu['sort'],
                     'status'         => (int)$menu['status'],
                     'sys_param_flag' => SysParamFlagEnum::Yes,
                 ]
@@ -193,18 +194,28 @@ class MenuImportService
         while (!empty($remainingMenus)) {
             $processedInThisRound = [];
 
+            // 按父菜单分组处理子菜单
+            $menusByParent = [];
             foreach ($remainingMenus as $menu) {
                 $parentKey = $menu['parent_key'];
-
-                // 如果父菜单已处理，则处理当前菜单
                 if (isset($menuIdMap[$parentKey])) {
+                    if (!isset($menusByParent[$parentKey])) {
+                        $menusByParent[$parentKey] = [];
+                    }
+                    $menusByParent[$parentKey][] = $menu;
+                }
+            }
+
+            // 对每个父菜单下的子菜单进行处理
+            foreach ($menusByParent as $parentKey => $childMenus) {
+                // 为子菜单自动分配 sort 值（目录和菜单分别计数）
+                $childMenus = self::assignSortValues($childMenus);
+
+                foreach ($childMenus as $menu) {
                     // 如果已存在则使用已有的 menu_id，否则生成新的
                     $menuId = $existingMenus[$menu['menu_key']] ?? generateId();
                     $menuIdMap[$menu['menu_key']] = $menuId;
                     $parentId = $menuIdMap[$parentKey];
-
-                    // 使用 CSV 中的 sort 值，如果没有则使用默认值 0
-                    $sortValue = isset($menu['sort']) && $menu['sort'] !== '' ? (int)$menu['sort'] : 0;
 
                     Menu::upsert([
                         [
@@ -220,7 +231,7 @@ class MenuImportService
                             'component'      => $menu['component'] ?: null,
                             'redirect'       => $menu['redirect'] ?: null,
                             'is_required'    => (int)$menu['is_required'],
-                            'sort'           => $sortValue,
+                            'sort'           => $menu['sort'],
                             'status'         => (int)$menu['status'],
                             'sys_param_flag' => SysParamFlagEnum::Yes,
                         ]
@@ -246,6 +257,68 @@ class MenuImportService
         }
 
         return $importedCount;
+    }
+
+    /**
+     * 为菜单数组自动分配 sort 值
+     * 目录（dir）和菜单（menu）分别计数，混合情况下有 sort 值的保持原值，没有的从对应类型的最大值+1 开始自增
+     * @param array $menus 菜单数组
+     * @return array 已分配 sort 值的菜单数组
+     * @author siushin<siushin@163.com>
+     */
+    private static function assignSortValues(array $menus): array
+    {
+        if (empty($menus)) {
+            return $menus;
+        }
+
+        // 创建索引映射，用于保持原始顺序
+        $indexMap = [];
+        foreach ($menus as $index => $menu) {
+            $indexMap[$index] = $menu;
+        }
+
+        // 按菜单类型分组（dir 和 menu 分别处理）
+        $menusByType = [];
+        foreach ($menus as $index => $menu) {
+            $menuType = $menu['menu_type'] ?? 'menu';
+            if (!isset($menusByType[$menuType])) {
+                $menusByType[$menuType] = [];
+            }
+            $menusByType[$menuType][] = ['index' => $index, 'menu' => $menu];
+        }
+
+        // 为每种类型分配 sort 值
+        foreach ($menusByType as $menuType => $typeMenus) {
+            // 找出该类型中已有的最大 sort 值
+            $maxSort = 0;
+            foreach ($typeMenus as $item) {
+                $sort = isset($item['menu']['sort']) && $item['menu']['sort'] !== '' ? (int)$item['menu']['sort'] : null;
+                if ($sort !== null && $sort > $maxSort) {
+                    $maxSort = $sort;
+                }
+            }
+
+            // 为没有 sort 值的菜单分配值（从最大值+1 开始）
+            $nextSort = $maxSort + 1;
+            foreach ($typeMenus as $item) {
+                $sort = isset($item['menu']['sort']) && $item['menu']['sort'] !== '' ? (int)$item['menu']['sort'] : null;
+                if ($sort === null) {
+                    $indexMap[$item['index']]['sort'] = $nextSort;
+                    $nextSort++;
+                } else {
+                    $indexMap[$item['index']]['sort'] = $sort;
+                }
+            }
+        }
+
+        // 重新组装菜单数组（保持原始顺序）
+        $result = [];
+        foreach ($indexMap as $menu) {
+            $result[] = $menu;
+        }
+
+        return $result;
     }
 
     /**

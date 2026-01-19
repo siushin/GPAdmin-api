@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Modules\Base\Enums\ModulePullTypeEnum;
 
 return new class extends Migration {
     /**
@@ -10,8 +11,10 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        $modulePullTypeComment = buildEnumComment(ModulePullTypeEnum::cases(), '模块拉取类型');
+
         // 模块表
-        Schema::create('gpa_modules', function (Blueprint $table) {
+        Schema::create('gpa_modules', function (Blueprint $table) use ($modulePullTypeComment) {
             $table->id('module_id')->comment('模块ID');
             $table->string('module_name', 50)->unique()->comment('模块名称/标识（对应module.json中的name，如：Base, Sms）');
             $table->string('module_alias', 100)->nullable()->comment('模块别名（对应module.json中的alias，如：base, sms）');
@@ -31,6 +34,8 @@ return new class extends Migration {
             $table->json('module_keywords')->nullable()->comment('关键词（对应module.json中的keywords）');
             $table->json('module_providers')->nullable()->comment('服务提供者（对应module.json中的providers）');
             $table->json('module_dependencies')->nullable()->comment('模块依赖（存储依赖的其他模块标识）');
+            $table->string('module_pull_type', 20)->nullable()->comment($modulePullTypeComment);
+            $table->string('module_pull_url', 500)->nullable()->unique()->comment('模块拉取地址（Git仓库地址或下载URL）');
             $table->unsignedBigInteger('uploader_id')->nullable()->comment('上传人ID（关联gpa_account.id）');
             $table->timestamps();
             $table->softDeletes()->comment('软删除时间');

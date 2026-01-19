@@ -1,4 +1,6 @@
 {
     "Base": true,
-    "Sms": true
+    "Sms": true,
+    "AppMarket": true,
+    "Oss": true
 }

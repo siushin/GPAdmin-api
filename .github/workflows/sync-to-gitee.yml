@@ -33,7 +33,7 @@ jobs:
       - name: Sync to Gitee
         env:
           # 替换为你的 Gitee 用户名/仓库名（与 GitHub 同名）
-          GITEE_REPO: git@gitee.com:siushin/laravel-api.git
+          GITEE_REPO: git@gitee.com:siushin/GPAdmin-api.git
         run: |
           # 配置 Git 身份（必填，否则推送失败）
           git config --global user.name "siushin"

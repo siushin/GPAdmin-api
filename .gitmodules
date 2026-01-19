@@ -7,3 +7,8 @@
 	path = Modules/Oss
 	url = git@github.com:siushin/gpa-module-oss.git
 	update = none
+
+[submodule "Modules/AppMarket"]
+	path = Modules/AppMarket
+	url = git@github.com:siushin/gpa-module-app-market.git
+	update = none

@@ -1,0 +1,170 @@
+---
+description: GPAdmin-api 模块开发规范
+globs: Modules/**/*
+alwaysApply: false
+---
+
+# GPAdmin-api 模块开发规范
+
+## 概述
+
+本项目采用前后端分离架构，后端仅提供 API 接口，不包含视图层。
+
+## 模块目录结构
+
+```
+Modules/ModuleName/
+├── app/
+│   ├── Http/
+│   │   └── Controllers/
+│   │       └── ModuleNameController.php
+│   └── Providers/
+│       ├── ModuleNameServiceProvider.php
+│       ├── EventServiceProvider.php
+│       └── RouteServiceProvider.php
+├── config/
+│   └── config.php
+├── database/
+│   ├── factories/
+│   ├── migrations/
+│   └── seeders/
+│       └── ModuleNameDatabaseSeeder.php
+├── routes/
+│   └── api.php
+├── composer.json
+└── module.json
+```
+
+## 创建新模块
+
+1. 使用命令创建模块：
+   ```bash
+   php artisan module:make ModuleName
+   ```
+
+2. 删除视图层相关文件（前后端分离不需要）：
+   - `resources/` 目录
+   - `vite.config.js`
+   - `package.json`
+   - `routes/web.php`
+
+3. 删除测试相关文件：
+   - `tests/` 目录
+
+4. 修改 Provider 文件：
+   - `ModuleNameServiceProvider.php`: 移除 `registerViews()` 方法及调用
+   - `RouteServiceProvider.php`: 移除 `mapWebRoutes()` 方法及调用
+
+5. 更新 `composer.json`（参考下方示例）
+
+6. 更新 `module.json`（参考下方示例）
+
+7. 更新主项目 `composer.json`：
+   - 在 `autoload.psr-4` 中添加模块命名空间映射
+
+8. 执行 `composer dump-autoload` 重新生成自动加载
+
+## 命名规范
+
+- **模块名**: PascalCase（如 `AppMarket`、`Sms`）
+- **命名空间**: `Modules\ModuleName\`
+- **控制器**: `ModuleNameController.php`
+- **ServiceProvider**: `ModuleNameServiceProvider.php`
+- **Seeder**: `ModuleNameDatabaseSeeder.php`
+
+## composer.json 配置示例
+
+```json
+{
+    "name": "gpadmin-api/module-name",
+    "description": "GPAdmin-api 模块描述",
+    "authors": [
+        {
+            "name": "siushin",
+            "email": "siushin@163.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\ModuleName\\": "app/",
+            "Modules\\ModuleName\\Database\\Factories\\": "database/factories/",
+            "Modules\\ModuleName\\Database\\Seeders\\": "database/seeders/"
+        }
+    }
+}
+```
+
+**要点：**
+- `name`: 格式为 `gpadmin-api/module-name`（全小写，连字符分隔）
+- 不包含 `autoload-dev`（测试目录已删除）
+- 作者信息统一使用 siushin
+
+## module.json 配置示例
+
+```json
+{
+    "name": "ModuleName",
+    "alias": "modulename",
+    "title": "模块标题",
+    "description": "模块描述",
+    "keywords": ["关键词1", "关键词2"],
+    "priority": 0,
+    "source": "官方",
+    "providers": [
+        "Modules\\ModuleName\\Providers\\ModuleNameServiceProvider"
+    ],
+    "files": [],
+    "extra": {
+        "meta": {
+            "module_icon": "IconName",
+            "module_version": "0.0.1",
+            "module_status": 1,
+            "module_is_core": 0,
+            "module_is_installed": 1,
+            "module_author": "siushin",
+            "module_author_email": "siushin@163.com",
+            "module_homepage": "https://gpadmin.siushin.com",
+            "module_dependencies": []
+        }
+    }
+}
+```
+
+**字段说明：**
+| 字段 | 说明 |
+|------|------|
+| `name` | 模块名（PascalCase） |
+| `alias` | 模块别名（小写） |
+| `title` | 模块标题（中文） |
+| `description` | 模块描述 |
+| `keywords` | 关键词数组 |
+| `source` | 来源（官方/第三方） |
+| `module_icon` | Ant Design 图标名 |
+| `module_version` | 版本号 |
+| `module_is_core` | 是否核心模块（1=是，0=否） |
+
+## Git 子模块配置
+
+模块作为 Git 子模块管理，需要在 `.gitmodules` 中配置：
+
+```
+[submodule "Modules/ModuleName"]
+    path = Modules/ModuleName
+    url = git@github.com:siushin/gpa-module-name.git
+    update = none
+```
+
+`update = none` 防止用户意外拉取未授权的私有模块。
+
+## 注意事项
+
+1. 前后端分离项目不需要视图层、前端资源、Web 路由
+2. 控制器方法返回 JSON 响应，不返回视图
+3. 新建模块后需要更新主项目 `composer.json` 的 autoload 配置
+4. `module_icon` 使用 Ant Design 图标名称

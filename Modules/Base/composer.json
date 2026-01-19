@@ -1,6 +1,6 @@
 {
-    "name": "laravel-api/base",
-    "description": "LaravelAPI 基础服务",
+    "name": "GPAdmin-api/base",
+    "description": "GPAdmin-api 基础服务",
     "authors": [
         {
             "name": "siushin",

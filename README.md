@@ -1,10 +1,10 @@
-# LaravelAPI
+# GPAdmin-api
 
 基于 Laravel 的 API 框架，提供常用工具类、助手函数等服务，采用模块化架构设计。
 
 ## 📖 项目简介
 
-LaravelAPI 是一个基于 Laravel 12 构建的企业级 API 框架，采用模块化架构，提供用户管理、权限管理、日志管理等核心功能，支持快速开发 RESTful API 服务。
+GPAdmin-api 是一个基于 Laravel 12 构建的企业级 API 框架，采用模块化架构，提供用户管理、权限管理、日志管理等核心功能，支持快速开发 RESTful API 服务。
 
 ## 🚀 技术栈
 
@@ -39,7 +39,7 @@ LaravelAPI 是一个基于 Laravel 12 构建的企业级 API 框架，采用模�
 ### 1. 安装项目
 
 ```shell
-composer create-project siushin/laravel-api
+composer create-project siushin/GPAdmin-api
 ```
 
 ### 2. 配置环境

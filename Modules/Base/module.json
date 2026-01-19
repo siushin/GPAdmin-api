@@ -2,7 +2,7 @@
     "name": "Base",
     "alias": "base",
     "title": "基础服务",
-    "description": "LaravelAPI 基础服务，勿删除！",
+    "description": "GPAdmin-api 基础服务，勿删除！",
     "keywords": [
         "基础",
         "认证",

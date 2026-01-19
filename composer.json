@@ -1,6 +1,6 @@
 {
-    "name": "siushin/laravel-api",
-    "description": "LaravelAPI 基于 Laravel 的API框架，提供常用工具类、助手函数等服务",
+    "name": "siushin/gpadmin-api",
+    "description": "GPAdmin-api 基于 Laravel 的API框架，提供常用工具类、助手函数等服务",
     "type": "project",
     "keywords": [
         "laravel",
@@ -37,7 +37,13 @@
             "Modules\\Base\\Database\\Seeders\\": "Modules/Base/database/seeders/",
             "Modules\\Sms\\": "Modules/Sms/app/",
             "Modules\\Sms\\Database\\Factories\\": "Modules/Sms/database/factories/",
-            "Modules\\Sms\\Database\\Seeders\\": "Modules/Sms/database/seeders/"
+            "Modules\\Sms\\Database\\Seeders\\": "Modules/Sms/database/seeders/",
+            "Modules\\AppMarket\\": "Modules/AppMarket/app/",
+            "Modules\\AppMarket\\Database\\Factories\\": "Modules/AppMarket/database/factories/",
+            "Modules\\AppMarket\\Database\\Seeders\\": "Modules/AppMarket/database/seeders/",
+            "Modules\\Oss\\": "Modules/Oss/app/",
+            "Modules\\Oss\\Database\\Factories\\": "Modules/Oss/database/factories/",
+            "Modules\\Oss\\Database\\Seeders\\": "Modules/Oss/database/seeders/"
         },
         "files": [
             "Modules/Base/app/Funcs/FuncLog.php",
@@ -81,7 +87,7 @@
         ]
     },
     "extra": {
-        "package-name": "siushin/laravel-api",
+        "package-name": "siushin/gpadmin-api",
         "laravel": {
             "dont-discover": []
         },

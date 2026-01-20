@@ -46,6 +46,7 @@ class AccountModuleSeeder extends Seeder
         $insertData = [];
         foreach ($modules as $module) {
             $insertData[] = [
+                'id'         => generateId(),
                 'account_id' => $accountId,
                 'module_id'  => $module->module_id,
                 'created_at' => $now,

@@ -124,6 +124,7 @@ class AppLogic
 
         // 插入账号模块关联表
         AccountModule::create([
+            'id'         => generateId(),
             'account_id' => $accountId,
             'module_id'  => $moduleId,
         ]);

@@ -92,8 +92,13 @@ class MenuImportService
 
         // 读取数据行
         while (($row = fgetcsv($handle)) !== false) {
-            if (count($row) !== count($headers)) {
-                continue; // 跳过不完整的行
+            // 兼容列数不一致：少的补空字符串，多的截断
+            $headerCount = count($headers);
+            $rowCount    = count($row);
+            if ($rowCount < $headerCount) {
+                $row = array_pad($row, $headerCount, '');
+            } elseif ($rowCount > $headerCount) {
+                $row = array_slice($row, 0, $headerCount);
             }
 
             // 检查整行是否为空（所有字段都为空或只包含空白字符）

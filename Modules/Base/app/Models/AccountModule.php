@@ -12,6 +12,10 @@ class AccountModule extends Model
 {
     protected $table = 'gpa_account_module';
 
+    public $incrementing = false;
+
+    protected $keyType = 'int';
+
     protected $fillable = [
         'id',
         'account_id',

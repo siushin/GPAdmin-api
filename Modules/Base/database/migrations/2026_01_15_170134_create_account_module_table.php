@@ -18,7 +18,7 @@ return new class extends Migration {
          * - 用于管理账号可访问的模块权限
          */
         Schema::create('gpa_account_module', function (Blueprint $table) {
-            $table->id()->comment('关联ID');
+            $table->unsignedBigInteger('id')->primary()->comment('关联ID（雪花ID）');
             $table->unsignedBigInteger('account_id')->comment('账号ID');
             $table->unsignedBigInteger('module_id')->comment('模块ID');
             $table->unsignedInteger('sort')->default(0)->comment('排序');

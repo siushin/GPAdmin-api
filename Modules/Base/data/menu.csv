@@ -1,29 +1,29 @@
-menu_type,parent_key,menu_name,menu_key,menu_path,menu_icon,component,redirect,sort,is_required,status
-menu,,工作台,workbench,/workbench,AppstoreOutlined,./Dashboard/Workplace,,1,1,1
+account_type,menu_type,parent_key,menu_name,menu_key,menu_path,menu_icon,component,redirect,sort,is_required,status
+admin,menu,,工作台,workbench,/workbench,AppstoreOutlined,./Dashboard/Workplace,,1,1,1
 
-dir,,用户管理,user,/user,TeamOutlined,,/user/list,2,0,1
-menu,user,用户列表,user.list,/user/list,UserOutlined,./User/User,,1,0,1
-menu,user,待审核用户列表,user.pending,/user/pending,UserOutlined,./User/Pending,,2,0,1
+admin,dir,,用户管理,user,/user,TeamOutlined,,/user/list,2,0,1
+admin,menu,user,用户列表,user.list,/user/list,UserOutlined,./User/User,,1,0,1
+admin,menu,user,待审核用户列表,user.pending,/user/pending,UserOutlined,./User/Pending,,2,0,1
 
-dir,,通知管理,notif,/notification,BellOutlined,,/notification/systemNotification,3,0,1
-menu,notif,系统通知,notif.systemNotification,/notification/systemNotification,NotificationOutlined,./notification/SystemNotification,,1,0,1
-menu,notif,站内信,notif.message,/notification/message,MessageOutlined,./notification/Message,,2,0,1
-menu,notif,公告管理,notif.announcement,/notification/announcement,SoundOutlined,./notification/Announcement,,3,0,1
+admin,dir,,通知管理,notif,/notification,BellOutlined,,/notification/systemNotification,3,0,1
+admin,menu,notif,系统通知,notif.systemNotification,/notification/systemNotification,NotificationOutlined,./notification/SystemNotification,,1,0,1
+admin,menu,notif,站内信,notif.message,/notification/message,MessageOutlined,./notification/Message,,2,0,1
+admin,menu,notif,公告管理,notif.announcement,/notification/announcement,SoundOutlined,./notification/Announcement,,3,0,1
 
-dir,,应用管理,app,/app,AppstoreOutlined,,/app/market,4,0,1
-menu,app,应用市场,app.market,/app/market,ShopOutlined,./App/Market,,1,0,1
-menu,app,我的应用,app.my,/app/my,AppstoreOutlined,./App/My,,2,0,1
+admin,dir,,应用管理,app,/app,AppstoreOutlined,,/app/market,4,0,1
+admin,menu,app,应用市场,app.market,/app/market,ShopOutlined,./App/Market,,1,0,1
+admin,menu,app,我的应用,app.my,/app/my,AppstoreOutlined,./App/My,,2,0,1
 
-dir,,公司管理,org,/company,ApartmentOutlined,,/company/company,5,0,1
-menu,org,公司管理,org.company,/company/company,BankOutlined,./Company/Company,,1,0,1
-menu,org,部门管理,org.dept,/company/department,PartitionOutlined,./Company/Department,,2,0,1
+admin,dir,,公司管理,org,/company,ApartmentOutlined,,/company/company,5,0,1
+admin,menu,org,公司管理,org.company,/company/company,BankOutlined,./Company/Company,,1,0,1
+admin,menu,org,部门管理,org.dept,/company/department,PartitionOutlined,./Company/Department,,2,0,1
 
-dir,,菜单管理,menu,/menu,BlockOutlined,,/menu/role,6,0,1
-menu,menu,菜单管理,menu.menu,/menu/menu,BlockOutlined,./Menu/Menu,,1,0,1
-menu,menu,角色管理,menu.role,/menu/role,ProfileOutlined,./Menu/Role,,2,0,1
+admin,dir,,菜单管理,menu,/menu,BlockOutlined,,/menu/role,6,0,1
+admin,menu,menu,菜单管理,menu.menu,/menu/menu,BlockOutlined,./Menu/Menu,,1,0,1
+admin,menu,menu,角色管理,menu.role,/menu/role,ProfileOutlined,./Menu/Role,,2,0,1
 
-dir,,系统管理,system,/system,SettingOutlined,,/system/admin,7,0,1
-menu,system,管理员列表,system.admin,/system/admin,UserOutlined,./System/Admin,,1,0,1
-menu,system,数据字典,system.dict,/system/dict,BookOutlined,./System/Dict,,2,0,1
-menu,system,数据字典（树状）,system.dictTree,/system/dictTree,BookOutlined,./System/DictTree,,3,0,1
-menu,system,系统日志,system.log,/system/log,FileTextOutlined,./System/Log,,4,0,1
+admin,dir,,系统管理,system,/system,SettingOutlined,,/system/admin,7,0,1
+admin,menu,system,管理员列表,system.admin,/system/admin,UserOutlined,./System/Admin,,1,0,1
+admin,menu,system,数据字典,system.dict,/system/dict,BookOutlined,./System/Dict,,2,0,1
+admin,menu,system,数据字典（树状）,system.dictTree,/system/dictTree,BookOutlined,./System/DictTree,,3,0,1
+admin,menu,system,系统日志,system.log,/system/log,FileTextOutlined,./System/Log,,4,0,1

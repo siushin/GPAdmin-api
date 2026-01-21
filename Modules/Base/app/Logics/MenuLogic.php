@@ -190,11 +190,26 @@ class MenuLogic
                 $firstMenuPath = '/' . $moduleAlias;
             }
 
+            // 获取该模块下第一个菜单（非目录）的路径，作为重定向目标
+            $redirectPath = null;
+            foreach ($moduleMenus as $menu) {
+                // menu_type 为 'menu' 表示是菜单，不是目录
+                if (($menu['menu_type'] ?? '') === 'menu' && !empty($menu['menu_path'])) {
+                    $redirectPath = $menu['menu_path'];
+                    break;
+                }
+            }
+
             // 构建模块菜单项
             $moduleMenuItem = [
                 'path' => $firstMenuPath,
                 'name' => $module['module_title'] ?? $module['module_name'],
             ];
+
+            // 添加重定向参数
+            if (!empty($redirectPath)) {
+                $moduleMenuItem['redirect'] = $redirectPath;
+            }
 
             // 如果有图标，添加到菜单项中
             if (!empty($module['module_icon'])) {

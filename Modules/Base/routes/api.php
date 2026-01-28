@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Base\Http\Controllers\AccountController;
-use Modules\Base\Http\Controllers\AdminController;
 use Modules\Base\Http\Controllers\AnnouncementController;
 use Modules\Base\Http\Controllers\AppController;
 use Modules\Base\Http\Controllers\CompanyController;
@@ -17,7 +16,6 @@ use Modules\Base\Http\Controllers\NotificationReadController;
 use Modules\Base\Http\Controllers\OrganizationController;
 use Modules\Base\Http\Controllers\RoleController;
 use Modules\Base\Http\Controllers\SystemNotificationController;
-use Modules\Base\Http\Controllers\UserController;
 
 // 公共路由
 Route::get('/dictionary/getTplFile', [DictionaryController::class, 'getTplFile']);  // 下载数据字典模板
@@ -39,32 +37,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 // API鉴权 管理员 路由组
 Route::middleware(['auth:sanctum'])->prefix('/admin')->group(function () {
-    // 管理员列表
-    Route::post('/admin/index', [AdminController::class, 'index']);
-    Route::post('/admin/list', [AdminController::class, 'list']);
-    Route::post('/admin/add', [AdminController::class, 'add']);
-    Route::post('/admin/update', [AdminController::class, 'update']);
-    Route::post('/admin/delete', [AdminController::class, 'delete']);
-    Route::post('/admin/getDetail', [AdminController::class, 'getDetail']);
-    Route::post('/admin/getLogs', [AdminController::class, 'getLogs']);
-    Route::post('/admin/batchRemoveFromCompany', [AdminController::class, 'batchRemoveFromCompany']);
-    Route::post('/admin/getAccountDepartments', [AdminController::class, 'getAccountDepartments']);
-    Route::post('/admin/getRoles', [AdminController::class, 'getRoles']);
-    Route::post('/admin/updateRoles', [AdminController::class, 'updateRoles']);
-
-    // 用户管理
-    Route::post('/user/index', [UserController::class, 'index']);
-    Route::post('/user/add', [UserController::class, 'add']);
-    Route::post('/user/update', [UserController::class, 'update']);
-    Route::post('/user/delete', [UserController::class, 'delete']);
-    Route::post('/user/getDetail', [UserController::class, 'getDetail']);
-    Route::post('/user/getLogs', [UserController::class, 'getLogs']);
-    Route::post('/user/audit', [UserController::class, 'audit']);
-    Route::post('/user/batchAudit', [UserController::class, 'batchAudit']);
-    Route::post('/user/batchDelete', [UserController::class, 'batchDelete']);
-    Route::post('/user/getRoles', [UserController::class, 'getRoles']);
-    Route::post('/user/updateRoles', [UserController::class, 'updateRoles']);
-
     // 文件管理
     Route::post('/file/upload', [FileController::class, 'upload']);     // 上传文件
     Route::post('/file/delete', [FileController::class, 'delete']);     // 删除文件

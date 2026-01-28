@@ -12,3 +12,8 @@
 	path = Modules/AppMarket
 	url = git@github.com:siushin/gpa-module-app-market.git
 	update = none
+
+[submodule "Modules/Admin"]
+	path = Modules/Admin
+	url = git@github.com:siushin/gpa-module-admin.git
+	update = none

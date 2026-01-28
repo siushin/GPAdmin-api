@@ -1,0 +1,25 @@
+{
+    "name": "gpadmin/base",
+    "description": "GPAdmin 基础服务模块",
+    "authors": [
+        {
+            "name": "siushin",
+            "email": "siushin@163.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Base\\": "app/"
+        },
+        "files": [
+            "app/Funcs/FuncLog.php",
+            "app/Funcs/FuncHelper.php"
+        ]
+    }
+}

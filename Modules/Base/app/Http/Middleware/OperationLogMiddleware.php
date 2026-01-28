@@ -127,11 +127,6 @@ class OperationLogMiddleware
             }
         }
 
-        // 如果还是没有模块名称，尝试从请求路径推断
-        if (!$module) {
-            $module = $this->inferModuleFromPath($request->path());
-        }
-
         // 如果还是没有操作类型，尝试从请求路径和方法推断
         if (!$action) {
             $action = $this->inferActionFromPath($request->path(), $request->method());
@@ -248,41 +243,6 @@ class OperationLogMiddleware
             if (str_contains($routeName, $key)) {
                 return $value;
             }
-        }
-
-        return '';
-    }
-
-    /**
-     * 从请求路径推断模块名称
-     *
-     * @param string $path
-     * @return string
-     */
-    private function inferModuleFromPath(string $path): string
-    {
-        // 移除 api/ 前缀
-        $path = preg_replace('/^api\//', '', $path);
-
-        // 移除 admin/ 或 user/ 前缀
-        $path = preg_replace('/^(admin|user)\//', '', $path);
-
-        // 获取第一段作为模块名（如：organization/index -> organization）
-        $parts = explode('/', $path);
-        if (!empty($parts[0])) {
-            // 转换为中文（简单映射，可以根据需要扩展）
-            $moduleMap = [
-                'organization' => '组织架构',
-                'dictionary'   => '数据字典',
-                'file'         => '文件管理',
-                'log'          => '日志管理',
-                'menu'         => '菜单管理',
-                'account'      => '账号管理',
-                'app'          => '应用管理',
-            ];
-
-            $moduleKey = strtolower($parts[0]);
-            return $moduleMap[$moduleKey] ?? ucfirst($parts[0]);
         }
 
         return '';

@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Modules\Base\Database\Seeders\BaseDatabaseSeeder;
+use Modules\Admin\Database\Seeders\BaseDatabaseSeeder;
 use Modules\Base\Services\MenuImportService;
 
 class DatabaseSeeder extends Seeder

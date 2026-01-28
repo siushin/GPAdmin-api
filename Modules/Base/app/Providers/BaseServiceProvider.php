@@ -10,8 +10,8 @@ use Modules\Base\Console\Commands\MakeApiCommand;
 use Modules\Base\Console\Commands\MakeControllerCommand;
 use Modules\Base\Console\Commands\MakeModelCommand;
 use Modules\Base\Console\Commands\SyncModulesCommand;
-use Modules\Base\Models\Module;
-use Modules\Base\Models\PersonalAccessToken;
+use Modules\Admin\Models\Module;
+use Modules\Admin\Models\PersonalAccessToken;
 use Nwidart\Modules\Traits\PathNamespace;
 
 class BaseServiceProvider extends ServiceProvider

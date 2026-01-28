@@ -5,11 +5,11 @@ namespace Modules\Base\Services;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Modules\Base\Models\AuditLog;
-use Modules\Base\Models\GeneralLog;
-use Modules\Base\Models\LoginLog;
-use Modules\Base\Models\OperationLog;
-use Modules\Base\Models\AccountSocial;
+use Modules\Admin\Models\AuditLog;
+use Modules\Admin\Models\GeneralLog;
+use Modules\Admin\Models\LoginLog;
+use Modules\Admin\Models\OperationLog;
+use Modules\Admin\Models\AccountSocial;
 use Siushin\LaravelTool\Enums\RequestSourceEnum;
 use Siushin\LaravelTool\Enums\SocialTypeEnum;
 

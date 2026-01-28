@@ -6,9 +6,9 @@ use Exception;
 use Illuminate\Console\Command;
 use Modules\Base\Enums\AccountTypeEnum;
 use Modules\Base\Enums\SysParamFlagEnum;
-use Modules\Base\Models\Menu;
-use Modules\Base\Models\Module;
-use Modules\Base\Models\ModuleMenu;
+use Modules\Admin\Models\Menu;
+use Modules\Admin\Models\Module;
+use Modules\Admin\Models\ModuleMenu;
 
 /**
  * 菜单导入服务类

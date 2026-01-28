@@ -6,8 +6,8 @@ use Exception;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Modules\Base\Enums\ModulePullTypeEnum;
-use Modules\Base\Models\AccountModule;
-use Modules\Base\Models\Module as ModuleModel;
+use Modules\Admin\Models\AccountModule;
+use Modules\Admin\Models\Module as ModuleModel;
 
 /**
  * 应用逻辑类

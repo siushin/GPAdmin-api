@@ -7,8 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Modules\Base\Enums\AccountTypeEnum;
 use Modules\Base\Enums\LogActionEnum;
-use Modules\Base\Models\Account;
-use Modules\Base\Models\AccountSocial;
+use Modules\Admin\Models\Account;
+use Modules\Admin\Models\AccountSocial;
 use Siushin\LaravelTool\Enums\RequestSourceEnum;
 use Siushin\LaravelTool\Enums\SocialTypeEnum;
 

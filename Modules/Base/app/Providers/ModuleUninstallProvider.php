@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Modules\Base\Enums\LogActionEnum;
 use Modules\Base\Enums\ModulePullTypeEnum;
-use Modules\Base\Models\AccountModule;
-use Modules\Base\Models\Menu;
-use Modules\Base\Models\Module;
-use Modules\Base\Models\ModuleMenu;
+use Modules\Admin\Models\AccountModule;
+use Modules\Admin\Models\Menu;
+use Modules\Admin\Models\Module;
+use Modules\Admin\Models\ModuleMenu;
 
 /**
  * 模块卸载 Provider

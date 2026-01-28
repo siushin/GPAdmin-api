@@ -3,7 +3,7 @@
 namespace Modules\Base\Console\Commands;
 
 use Illuminate\Console\Command;
-use Modules\Base\Models\Module;
+use Modules\Admin\Models\Module;
 
 /**
  * 扫描并同步模块数据到 gpa_modules 表

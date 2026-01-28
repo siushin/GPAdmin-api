@@ -5,10 +5,10 @@ namespace Modules\Base\Logics;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Modules\Base\Enums\AccountTypeEnum;
-use Modules\Base\Models\Menu;
-use Modules\Base\Models\Module;
-use Modules\Base\Models\RoleMenu;
-use Modules\Base\Models\UserRole;
+use Modules\Admin\Models\Menu;
+use Modules\Admin\Models\Module;
+use Modules\Admin\Models\RoleMenu;
+use Modules\Admin\Models\UserRole;
 
 /**
  * 菜单逻辑类

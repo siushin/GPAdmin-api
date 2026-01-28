@@ -4,7 +4,7 @@ namespace Modules\Base\Logics;
 
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Modules\Base\Enums\AccountTypeEnum;
+use Modules\Admin\Enums\AccountTypeEnum;
 use Modules\Admin\Models\Menu;
 use Modules\Admin\Models\Module;
 use Modules\Admin\Models\RoleMenu;

@@ -4,7 +4,7 @@ namespace Modules\Base\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Modules\Base\Enums\AccountTypeEnum;
+use Modules\Admin\Enums\AccountTypeEnum;
 use Siushin\LaravelTool\Enums\RequestSourceEnum;
 use Symfony\Component\HttpFoundation\Response;
 

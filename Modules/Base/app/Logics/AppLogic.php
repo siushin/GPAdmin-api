@@ -5,7 +5,7 @@ namespace Modules\Base\Logics;
 use Exception;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
-use Modules\Base\Enums\ModulePullTypeEnum;
+use Modules\Admin\Enums\ModulePullTypeEnum;
 use Modules\Admin\Models\AccountModule;
 use Modules\Admin\Models\Module as ModuleModel;
 

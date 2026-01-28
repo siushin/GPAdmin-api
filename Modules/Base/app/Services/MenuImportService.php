@@ -4,8 +4,8 @@ namespace Modules\Base\Services;
 
 use Exception;
 use Illuminate\Console\Command;
-use Modules\Base\Enums\AccountTypeEnum;
-use Modules\Base\Enums\SysParamFlagEnum;
+use Modules\Admin\Enums\AccountTypeEnum;
+use Modules\Admin\Enums\SysParamFlagEnum;
 use Modules\Admin\Models\Menu;
 use Modules\Admin\Models\Module;
 use Modules\Admin\Models\ModuleMenu;

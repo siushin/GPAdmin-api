@@ -13,8 +13,6 @@ use Modules\Base\Console\Commands\SyncModulesCommand;
 use Modules\Base\Models\Module;
 use Modules\Base\Models\PersonalAccessToken;
 use Nwidart\Modules\Traits\PathNamespace;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 
 class BaseServiceProvider extends ServiceProvider
 {
@@ -34,8 +32,6 @@ class BaseServiceProvider extends ServiceProvider
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerTranslations();
-        $this->registerConfig();
-        $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
         // 配置 Sanctum 使用自定义的 PersonalAccessToken 模型
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
@@ -104,55 +100,6 @@ class BaseServiceProvider extends ServiceProvider
         }
     }
 
-    /**
-     * Register config.
-     */
-    protected function registerConfig(): void
-    {
-        $configPath = module_path($this->name, config('modules.paths.generator.config.path'));
-
-        if (is_dir($configPath)) {
-            $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($configPath));
-
-            foreach ($iterator as $file) {
-                if ($file->isFile() && $file->getExtension() === 'php') {
-                    $config = str_replace($configPath . DIRECTORY_SEPARATOR, '', $file->getPathname());
-                    $config_key = str_replace([DIRECTORY_SEPARATOR, '.php'], ['.', ''], $config);
-                    $segments = explode('.', $this->nameLower . '.' . $config_key);
-
-                    // Remove duplicated adjacent segments
-                    $normalized = [];
-                    foreach ($segments as $segment) {
-                        if (end($normalized) !== $segment) {
-                            $normalized[] = $segment;
-                        }
-                    }
-
-                    $key = ($config === 'config.php') ? $this->nameLower : implode('.', $normalized);
-
-                    // 特殊处理 laravel-tool.php，使其可以通过 config('laravel-tool') 访问
-                    if ($config === 'laravel-tool.php') {
-                        $this->publishes([$file->getPathname() => config_path($config)], 'config');
-                        $this->merge_config_from($file->getPathname(), 'laravel-tool');
-                    } else {
-                        $this->publishes([$file->getPathname() => config_path($config)], 'config');
-                        $this->merge_config_from($file->getPathname(), $key);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Merge config from the given path recursively.
-     */
-    protected function merge_config_from(string $path, string $key): void
-    {
-        $existing = config($key, []);
-        $module_config = require $path;
-
-        config([$key => array_replace_recursive($existing, $module_config)]);
-    }
 
     /**
      * 启动时同步模块数据

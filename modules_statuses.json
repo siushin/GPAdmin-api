@@ -1,4 +1,5 @@
 {
+    "Admin": true,
     "Base": true,
     "Sms": true,
     "AppMarket": true,
